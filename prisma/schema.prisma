@@ -16,6 +16,8 @@ model Tenant {
   settings   Setting?
   sequences  Sequence[]
   priceItems PriceItem[]
+  receipts     Receipt[]
+  receiptItems ReceiptItem[]
 
   @@map("tenants")
 }
@@ -79,4 +81,44 @@ model Sequence {
   @@unique([tenantId, kind])
   @@index([tenantId])
   @@map("sequences")
+}
+
+model Receipt {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  number         String
+  variableSymbol String   @map("variable_symbol")
+  paymentType    String   @map("payment_type")
+  totalCents     Int      @map("total_cents")
+  eetStatus      String   @default("neodeslano") @map("eet_status")
+  printOnIssue   Boolean  @default(false) @map("print_on_issue")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items  ReceiptItem[]
+
+  @@unique([tenantId, number])
+  @@unique([tenantId, variableSymbol])
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@map("receipts")
+}
+
+model ReceiptItem {
+  id             String  @id @default(uuid()) @db.Uuid
+  receiptId      String  @map("receipt_id") @db.Uuid
+  tenantId       String  @map("tenant_id") @db.Uuid
+  priceItemId    String? @map("price_item_id") @db.Uuid
+  name           String
+  priceCents     Int     @map("price_cents")
+  quantity       Int
+  category       String
+  lineTotalCents Int     @map("line_total_cents")
+
+  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([receiptId])
+  @@index([tenantId])
+  @@map("receipt_items")
 }

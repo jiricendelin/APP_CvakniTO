@@ -72,6 +72,54 @@ export function sequencePreview(config: SequenceConfig): string {
   );
 }
 
+export async function allocateSequenceNumberInTransaction(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  kind: SequenceKind
+): Promise<string> {
+  await tx.$executeRaw(
+    Prisma.sql`
+      SELECT id FROM sequences
+      WHERE tenant_id = ${tenantId}::uuid AND kind = ${kind}
+      FOR UPDATE
+    `
+  );
+
+  const seq = await tx.sequence.findUniqueOrThrow({
+    where: { tenantId_kind: { tenantId, kind } },
+  });
+
+  const currentYear = pragueYear();
+  let value = seq.nextValue;
+  let storedYear = seq.year;
+
+  if (seq.resetYearly) {
+    if (storedYear === null || storedYear !== currentYear) {
+      value = 1;
+      storedYear = currentYear;
+    }
+  } else if (storedYear === null) {
+    storedYear = currentYear;
+  }
+
+  const formatted = formatSequenceNumber(
+    seq.prefix,
+    seq.format,
+    value,
+    currentYear
+  );
+
+  await tx.sequence.update({
+    where: { id: seq.id },
+    data: {
+      nextValue: value + 1,
+      year: storedYear,
+    },
+  });
+
+  return formatted;
+}
+
 /** Atomické přidělení dalšího čísla (FOR UPDATE). */
 export async function allocateSequenceNumber(
   tenantId: string,
@@ -79,47 +127,7 @@ export async function allocateSequenceNumber(
 ): Promise<string> {
   await ensureSequencesForTenant(tenantId);
 
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw(
-      Prisma.sql`
-        SELECT id FROM sequences
-        WHERE tenant_id = ${tenantId}::uuid AND kind = ${kind}
-        FOR UPDATE
-      `
-    );
-
-    const seq = await tx.sequence.findUniqueOrThrow({
-      where: { tenantId_kind: { tenantId, kind } },
-    });
-
-    const currentYear = pragueYear();
-    let value = seq.nextValue;
-    let storedYear = seq.year;
-
-    if (seq.resetYearly) {
-      if (storedYear === null || storedYear !== currentYear) {
-        value = 1;
-        storedYear = currentYear;
-      }
-    } else if (storedYear === null) {
-      storedYear = currentYear;
-    }
-
-    const formatted = formatSequenceNumber(
-      seq.prefix,
-      seq.format,
-      value,
-      currentYear
-    );
-
-    await tx.sequence.update({
-      where: { id: seq.id },
-      data: {
-        nextValue: value + 1,
-        year: storedYear,
-      },
-    });
-
-    return formatted;
-  });
+  return prisma.$transaction(async (tx) =>
+    allocateSequenceNumberInTransaction(tx, tenantId, kind)
+  );
 }
