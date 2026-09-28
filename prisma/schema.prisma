@@ -18,6 +18,7 @@ model Tenant {
   priceItems PriceItem[]
   receipts     Receipt[]
   receiptItems ReceiptItem[]
+  customers    Customer[]
 
   @@map("tenants")
 }
@@ -121,4 +122,24 @@ model ReceiptItem {
   @@index([receiptId])
   @@index([tenantId])
   @@map("receipt_items")
+}
+
+model Customer {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  ico       String   @default("")
+  dic       String   @default("")
+  address   String   @default("")
+  email     String   @default("")
+  phone     String   @default("")
+  note      String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, name])
+  @@map("customers")
 }
