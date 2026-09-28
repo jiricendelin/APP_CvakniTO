@@ -7,6 +7,7 @@ import {
 } from "@/lib/receipts/payment-type";
 import { formatPragueDateTime } from "@/lib/time/format-prague";
 import { ReceiptDeleteButton } from "./receipt-delete-button";
+import { PaymentQrSection } from "./payment-qr-section";
 
 export type ReceiptDetailData = {
   id: string;
@@ -36,10 +37,14 @@ export function ReceiptDetail({
   receipt,
   canModify,
   csrf,
+  qrSpayd,
+  qrMissingIban,
 }: {
   receipt: ReceiptDetailData;
   canModify: boolean;
   csrf: string;
+  qrSpayd?: string | null;
+  qrMissingIban?: boolean;
 }) {
   const paymentLabel = isPaymentType(receipt.paymentType)
     ? PAYMENT_TYPE_LABELS[receipt.paymentType]
@@ -98,9 +103,12 @@ export function ReceiptDetail({
       </p>
 
       {receipt.paymentType === "qr" && (
-        <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-          QR kód pro platbu doplníme v R12 (SPAYD).
-        </p>
+        <PaymentQrSection
+          spayd={qrSpayd ?? null}
+          totalCents={receipt.totalCents}
+          variableSymbol={receipt.variableSymbol}
+          missingIban={qrMissingIban}
+        />
       )}
 
       {canModify && (

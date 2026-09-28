@@ -8,8 +8,9 @@ import {
   type CheckoutState,
 } from "@/app/(app)/checkout/actions";
 import { CsrfField } from "@/components/csrf-field";
+import { PaymentQrSection } from "@/components/receipts/payment-qr-section";
 import { serializeCartForCheckout } from "@/lib/pos/serialize-cart";
-import type { CartLine } from "@/lib/pos/types";
+import { cartTotal, type CartLine } from "@/lib/pos/types";
 
 const PRINT_STORAGE_KEY = "cvaknito.printOnCheckout";
 
@@ -53,13 +54,45 @@ export function CheckoutPanel({
     {}
   );
 
+  const qrPending =
+    Boolean(state.receiptId) &&
+    (state.qrSpayd !== undefined || state.qrMissingIban);
+
   useEffect(() => {
+    if (!state.receiptId || qrPending) return;
+    onCheckoutSuccess();
+    router.push(`/receipts/${state.receiptId}`);
+  }, [state.receiptId, qrPending, router, onCheckoutSuccess]);
+
+  function finishQrFlow() {
     if (!state.receiptId) return;
     onCheckoutSuccess();
     router.push(`/receipts/${state.receiptId}`);
-  }, [state.receiptId, router, onCheckoutSuccess]);
+  }
 
   if (cart.length === 0) return null;
+
+  const totalCents = cartTotal(cart);
+
+  if (qrPending && state.receiptId) {
+    return (
+      <section className="space-y-4 rounded-lg border border-border bg-card p-4">
+        <PaymentQrSection
+          spayd={state.qrSpayd ?? null}
+          totalCents={state.qrTotalCents ?? totalCents}
+          variableSymbol={state.qrVariableSymbol ?? ""}
+          missingIban={state.qrMissingIban}
+        />
+        <button
+          type="button"
+          onClick={finishQrFlow}
+          className="min-h-[3rem] w-full rounded-xl bg-primary px-4 py-3 text-base font-semibold text-primary-foreground"
+        >
+          Hotovo — detail účtenky
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-3 rounded-lg border border-border bg-card p-4">

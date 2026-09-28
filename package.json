@@ -12,7 +12,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "create-user": "tsx scripts/create-user.ts",
-    "test:sequences": "tsx scripts/test-sequences-parallel.ts"
+    "test:sequences": "tsx scripts/test-sequences-parallel.ts",
+    "test:spayd": "tsx scripts/test-spayd.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

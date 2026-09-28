@@ -3,6 +3,8 @@ import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getReceiptForTenant } from "@/lib/receipts/repository";
 import { canModifyReceipt } from "@/lib/receipts/eet-status";
+import { getTenantSettings } from "@/lib/settings/repository";
+import { buildSpaydForReceipt } from "@/lib/spayd";
 import { ReceiptDetail } from "@/components/receipts/receipt-detail";
 
 export const dynamic = "force-dynamic";
@@ -14,13 +16,31 @@ export default async function ReceiptDetailPage({
 }) {
   const { id } = await params;
   const [tenantId, csrf] = await Promise.all([getTenantId(), getCsrfToken()]);
-  const receipt = await getReceiptForTenant(tenantId, id);
+  const [receipt, settings] = await Promise.all([
+    getReceiptForTenant(tenantId, id),
+    getTenantSettings(tenantId),
+  ]);
   if (!receipt) notFound();
+
+  const qrSpayd =
+    receipt.paymentType === "qr"
+      ? buildSpaydForReceipt({
+          iban: settings.iban,
+          totalCents: receipt.totalCents,
+          variableSymbol: receipt.variableSymbol,
+          receiptNumber: receipt.number,
+          companyName: settings.companyName,
+        })
+      : null;
 
   return (
     <ReceiptDetail
       canModify={canModifyReceipt(receipt.eetStatus)}
       csrf={csrf}
+      qrSpayd={qrSpayd}
+      qrMissingIban={
+        receipt.paymentType === "qr" ? !settings.iban?.trim() : undefined
+      }
       receipt={{
         id: receipt.id,
         number: receipt.number,
