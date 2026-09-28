@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getTenantSettings } from "@/lib/settings/repository";
@@ -15,6 +16,20 @@ export default async function SettingsPage() {
       <p className="text-sm text-muted-foreground">
         Firma, platební údaje a barva aplikace.
       </p>
+      <nav className="flex flex-col gap-2 text-sm">
+        <Link
+          href="/settings/pricelist"
+          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
+        >
+          Ceník →
+        </Link>
+        <Link
+          href="/settings/sequences"
+          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
+        >
+          Číselné řady →
+        </Link>
+      </nav>
       <GeneralSettingsForm csrf={csrf} settings={settings} />
     </div>
   );
