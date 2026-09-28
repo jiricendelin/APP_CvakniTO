@@ -1,11 +1,10 @@
 "use server";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth";
+import { resolveLoginUser } from "@/lib/auth/resolve-login-user";
 import { assertCsrf } from "@/lib/auth/csrf";
 import {
   clearLoginFailures,
@@ -18,7 +17,7 @@ const schema = z.object({
   password: z.string().min(1, "Zadejte heslo"),
 });
 
-export type LoginState = { error?: string };
+export type LoginState = { error?: string; success?: boolean };
 
 function clientIp(h: Headers): string {
   const forwarded = h.get("x-forwarded-for");
@@ -52,29 +51,22 @@ export async function loginAction(
     return { error: parsed.error.issues[0]?.message ?? "Neplatný vstup" };
   }
 
-  const email = parsed.data.email.toLowerCase().trim();
-  const users = await prisma.user.findMany({ where: { email } });
-
-  if (users.length === 0) {
+  const resolved = await resolveLoginUser(parsed.data.email);
+  if (!resolved.ok) {
     recordLoginFailure(ip);
-    return { error: "Nesprávný email nebo heslo." };
+    return { error: resolved.error };
   }
 
-  if (users.length > 1) {
-    return {
-      error:
-        "Tento email je u více účtů. Kontaktujte správce (upřesněte tenant).",
-    };
-  }
-
-  const user = users[0]!;
-  const ok = await verifyPassword(user.passwordHash, parsed.data.password);
+  const ok = await verifyPassword(
+    resolved.user.passwordHash,
+    parsed.data.password
+  );
   if (!ok) {
     recordLoginFailure(ip);
     return { error: "Nesprávný email nebo heslo." };
   }
 
   clearLoginFailures(ip);
-  await createSession(user.id);
-  redirect("/");
+  await createSession(resolved.user.id);
+  return { success: true };
 }

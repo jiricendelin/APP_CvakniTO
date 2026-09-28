@@ -9,6 +9,16 @@ import { hashPassword } from "../lib/auth/password";
 
 const prisma = new PrismaClient();
 
+function dbHint(url: string | undefined): string {
+  if (!url) return "(DATABASE_URL není nastavená)";
+  try {
+    const u = new URL(url.replace(/^postgresql:/, "http:"));
+    return `${u.hostname}:${u.port || "5432"}/${u.pathname.replace(/^\//, "")}`;
+  } catch {
+    return "(nelze parsovat DATABASE_URL)";
+  }
+}
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -47,20 +57,30 @@ async function main() {
     );
   }
 
+  console.log(`Cílová DB: ${dbHint(process.env.DATABASE_URL)}`);
+
   const tenant = await resolveTenant(tenantArg);
   const passwordHash = await hashPassword(password);
 
-  const user = await prisma.user.upsert({
+  const existing = await prisma.user.findFirst({
     where: {
-      tenantId_email: { tenantId: tenant.id, email },
-    },
-    update: { passwordHash },
-    create: {
       tenantId: tenant.id,
-      email,
-      passwordHash,
+      email: { equals: email, mode: "insensitive" },
     },
   });
+
+  const user = existing
+    ? await prisma.user.update({
+        where: { id: existing.id },
+        data: { email, passwordHash },
+      })
+    : await prisma.user.create({
+        data: {
+          tenantId: tenant.id,
+          email,
+          passwordHash,
+        },
+      });
 
   console.log(`Uživatel připraven: ${user.email} (tenant ${tenant.name})`);
 }

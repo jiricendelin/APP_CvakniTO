@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { readSessionSecret } from "@/lib/auth/session-secret";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth/session";
 import { CSRF_COOKIE } from "@/lib/auth/csrf-shared";
 
@@ -35,7 +36,7 @@ function isPublicApi(pathname: string): boolean {
 
 async function resolveUserId(req: NextRequest): Promise<string | null> {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
-  const secret = process.env.SESSION_SECRET || "";
+  const secret = readSessionSecret();
   if (!token || !secret) return null;
   return verifySession(token, secret);
 }

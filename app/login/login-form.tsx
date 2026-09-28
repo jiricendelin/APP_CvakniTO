@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { loginAction, type LoginState } from "./actions";
 import { CsrfField } from "@/components/csrf-field";
 
@@ -19,10 +20,18 @@ function SubmitButton() {
 }
 
 export function LoginForm({ csrf }: { csrf: string }) {
+  const router = useRouter();
   const [state, formAction] = useActionState<LoginState, FormData>(
     loginAction,
     {}
   );
+
+  useEffect(() => {
+    if (state.success) {
+      router.replace("/");
+      router.refresh();
+    }
+  }, [state.success, router]);
 
   return (
     <form action={formAction} className="space-y-4">
