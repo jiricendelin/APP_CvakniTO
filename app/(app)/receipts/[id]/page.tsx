@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getReceiptForTenant } from "@/lib/receipts/repository";
+import { canModifyReceipt } from "@/lib/receipts/eet-status";
 import { ReceiptDetail } from "@/components/receipts/receipt-detail";
 
 export const dynamic = "force-dynamic";
@@ -11,12 +13,14 @@ export default async function ReceiptDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const tenantId = await getTenantId();
+  const [tenantId, csrf] = await Promise.all([getTenantId(), getCsrfToken()]);
   const receipt = await getReceiptForTenant(tenantId, id);
   if (!receipt) notFound();
 
   return (
     <ReceiptDetail
+      canModify={canModifyReceipt(receipt.eetStatus)}
+      csrf={csrf}
       receipt={{
         id: receipt.id,
         number: receipt.number,

@@ -5,6 +5,8 @@ import {
   PAYMENT_TYPE_LABELS,
   isPaymentType,
 } from "@/lib/receipts/payment-type";
+import { formatPragueDateTime } from "@/lib/time/format-prague";
+import { ReceiptDeleteButton } from "./receipt-delete-button";
 
 export type ReceiptDetailData = {
   id: string;
@@ -25,20 +27,20 @@ export type ReceiptDetailData = {
   }[];
 };
 
-function formatPragueDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("cs-CZ", {
-    timeZone: "Europe/Prague",
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
 function eetLabel(status: string): string {
   if (status === "neodeslano") return "Neodesláno do EET";
   return status;
 }
 
-export function ReceiptDetail({ receipt }: { receipt: ReceiptDetailData }) {
+export function ReceiptDetail({
+  receipt,
+  canModify,
+  csrf,
+}: {
+  receipt: ReceiptDetailData;
+  canModify: boolean;
+  csrf: string;
+}) {
   const paymentLabel = isPaymentType(receipt.paymentType)
     ? PAYMENT_TYPE_LABELS[receipt.paymentType]
     : receipt.paymentType;
@@ -99,6 +101,18 @@ export function ReceiptDetail({ receipt }: { receipt: ReceiptDetailData }) {
         <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
           QR kód pro platbu doplníme v R12 (SPAYD).
         </p>
+      )}
+
+      {canModify && (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Link
+            href={`/receipts/${receipt.id}/edit`}
+            className="inline-flex justify-center rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+          >
+            Upravit
+          </Link>
+          <ReceiptDeleteButton csrf={csrf} receiptId={receipt.id} />
+        </div>
       )}
 
       <Link
