@@ -6,6 +6,7 @@ declare module "handlebars/dist/handlebars.js" {
       input: string,
       options?: { strict?: boolean; noEscape?: boolean }
     ) => TemplateDelegate;
+    registerHelper: Runtime["registerHelper"];
   }
 
   const Handlebars: HandlebarsRuntime;

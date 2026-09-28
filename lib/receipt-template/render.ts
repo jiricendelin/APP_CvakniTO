@@ -1,4 +1,3 @@
-import "server-only";
 import { getReceiptHandlebars } from "./handlebars-instance";
 import { buildSampleReceiptContext } from "./sample-context";
 import type { ReceiptTemplateContext } from "./types";

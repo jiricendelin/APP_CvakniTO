@@ -1,4 +1,3 @@
-import "server-only";
 import Handlebars from "handlebars/dist/handlebars.js";
 import { registerReceiptTemplateHelpers } from "./register-helpers";
 
