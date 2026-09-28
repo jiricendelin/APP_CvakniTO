@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isValidIban, normalizeIban } from "@/lib/iban";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/color";
 import { DEFAULT_RECEIPT_TEMPLATE } from "@/lib/receipt-template/default-template";
+import { smtpSettingsSchema } from "@/lib/settings/smtp-schema";
 
 const hexColor = z
   .string()
@@ -20,6 +21,7 @@ export const tenantSettingsSchema = z.object({
     .max(20_000)
     .optional()
     .default(DEFAULT_RECEIPT_TEMPLATE),
+  ...smtpSettingsSchema.shape,
 });
 
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;
@@ -53,7 +55,16 @@ export const settingsFormSchema = z
 
 export function formToSettings(
   data: z.infer<typeof settingsFormSchema>
-): Omit<TenantSettings, "receiptTemplate"> {
+): Pick<
+  TenantSettings,
+  | "companyName"
+  | "companyIco"
+  | "companyDic"
+  | "companyAddress"
+  | "bankAccount"
+  | "iban"
+  | "primaryColor"
+> {
   return {
     companyName: data.companyName.trim(),
     companyIco: data.companyIco.trim(),
