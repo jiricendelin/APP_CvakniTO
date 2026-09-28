@@ -41,6 +41,12 @@ export default async function SettingsPage() {
         >
           E-mail (SMTP) →
         </Link>
+        <Link
+          href="/settings/email-templates"
+          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
+        >
+          E-mailové šablony →
+        </Link>
       </nav>
       <GeneralSettingsForm csrf={csrf} settings={settings} />
     </div>

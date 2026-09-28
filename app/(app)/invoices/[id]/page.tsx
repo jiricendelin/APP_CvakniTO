@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getInvoiceForTenant } from "@/lib/invoices/repository";
 import { InvoiceDetail } from "@/components/invoices/invoice-detail";
+import { InvoiceEmailActions } from "@/components/invoices/invoice-email-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +13,12 @@ export default async function InvoiceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const tenantId = await getTenantId();
+  const [tenantId, csrf] = await Promise.all([getTenantId(), getCsrfToken()]);
   const invoice = await getInvoiceForTenant(tenantId, id);
   if (!invoice) notFound();
 
   return (
+    <div className="space-y-6">
     <InvoiceDetail
       invoice={{
         id: invoice.id,
@@ -42,5 +45,9 @@ export default async function InvoiceDetailPage({
         })),
       }}
     />
+    <div className="mx-auto w-full max-w-lg">
+      <InvoiceEmailActions csrf={csrf} invoiceId={invoice.id} />
+    </div>
+    </div>
   );
 }

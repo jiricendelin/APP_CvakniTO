@@ -3,6 +3,7 @@ import { isValidIban, normalizeIban } from "@/lib/iban";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/color";
 import { DEFAULT_RECEIPT_TEMPLATE } from "@/lib/receipt-template/default-template";
 import { smtpSettingsSchema } from "@/lib/settings/smtp-schema";
+import { mailTemplatesSchema } from "@/lib/mail/template-schema";
 
 const hexColor = z
   .string()
@@ -22,6 +23,7 @@ export const tenantSettingsSchema = z.object({
     .optional()
     .default(DEFAULT_RECEIPT_TEMPLATE),
   ...smtpSettingsSchema.shape,
+  ...mailTemplatesSchema.shape,
 });
 
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;
