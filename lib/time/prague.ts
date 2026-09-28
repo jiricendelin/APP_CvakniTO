@@ -1,20 +1,55 @@
-function pragueParts(date: Date) {
+function pragueParts(date: Date, withMinutes = false) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Prague",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
+    minute: withMinutes ? "2-digit" : undefined,
+    second: withMinutes ? "2-digit" : undefined,
     hour12: false,
   }).formatToParts(date);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     parseInt(parts.find((p) => p.type === type)?.value ?? "0", 10);
-  return {
+  const base = {
     year: get("year"),
     month: get("month"),
     day: get("day"),
     hour: get("hour"),
   };
+  if (!withMinutes) return base;
+  return {
+    ...base,
+    minute: get("minute"),
+    second: get("second"),
+  };
+}
+
+/** ISO 8601 s offsetem pro EET (`dat_trzby`). */
+export function formatPragueIsoDateTime(date: Date): string {
+  const p = pragueParts(date, true) as {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  };
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const localAsUtc = Date.UTC(
+    p.year,
+    p.month - 1,
+    p.day,
+    p.hour,
+    p.minute,
+    p.second
+  );
+  const offsetMin = Math.round((localAsUtc - date.getTime()) / 60_000);
+  const sign = offsetMin >= 0 ? "+" : "-";
+  const abs = Math.abs(offsetMin);
+  const oh = Math.floor(abs / 60);
+  const om = abs % 60;
+  return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}:${pad(p.second)}${sign}${pad(oh)}:${pad(om)}`;
 }
 
 /** Kalendářní den YYYY-MM-DD → začátek dne v UTC (Europe/Prague). */

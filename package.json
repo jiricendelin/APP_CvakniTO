@@ -21,6 +21,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@finitoapp/eet-client": "^0.3.0",
     "@prisma/client": "^6.2.1",
     "@react-pdf/renderer": "^4.9.0",
     "argon2": "^0.41.1",

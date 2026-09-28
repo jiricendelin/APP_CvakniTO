@@ -11,6 +11,10 @@ echo "CvakniTO: NODE_ENV=$NODE_ENV PORT=${PORT:-3000}"
 echo "CvakniTO: DATABASE_URL set? $([ -n "$DATABASE_URL" ] && echo yes || echo NO)"
 echo "CvakniTO: SESSION_SECRET set? $([ -n "$SESSION_SECRET" ] && echo yes || echo NO)"
 
+EET_DIR="${EET_DATA_DIR:-/data/eet}"
+mkdir -p "$EET_DIR" 2>/dev/null || true
+echo "CvakniTO: EET cert dir $EET_DIR"
+
 echo "CvakniTO: generating Prisma client..."
 npx prisma generate >/dev/null 2>&1 || echo "CvakniTO: prisma generate failed (continuing)."
 

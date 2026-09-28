@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
+export async function getPaymentForTenant(tenantId: string, id: string) {
+  return prisma.payment.findFirst({
+    where: { id, tenantId },
+  });
+}
+
 export async function listPaymentsForTenant(tenantId: string) {
   return prisma.payment.findMany({
     where: { tenantId },

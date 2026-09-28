@@ -3,6 +3,7 @@
 import { getTenantId } from "@/lib/auth";
 import { assertCsrf } from "@/lib/auth/csrf";
 import { checkoutPayloadSchema } from "@/lib/receipts/checkout-schema";
+import { tryAutoSendReceiptToEet } from "@/lib/eet/submit-receipt";
 import { createReceiptFromCart } from "@/lib/receipts/create-receipt";
 import { getReceiptForTenant } from "@/lib/receipts/repository";
 import { getTenantSettings } from "@/lib/settings/repository";
@@ -96,6 +97,8 @@ export async function checkoutAction(
       printOnIssue: parsed.data.printOnIssue,
       cart: parsed.data.cart,
     });
+
+    await tryAutoSendReceiptToEet(tenantId, receiptId);
 
     return buildCheckoutReceiptState(
       tenantId,

@@ -5,6 +5,7 @@ import {
 import type { TenantSettings } from "@/lib/settings/schema";
 import { buildSpaydForReceipt } from "@/lib/spayd";
 import { formatPragueDateTime } from "@/lib/time/format-prague";
+import { eetStatusLabel } from "@/lib/receipts/eet-status";
 import type { ReceiptTemplateContext } from "./types";
 
 export type ReceiptForTemplate = {
@@ -13,8 +14,9 @@ export type ReceiptForTemplate = {
   paymentType: string;
   totalCents: number;
   eetStatus: string;
-  eetFik?: string | null;
+  eetPok?: string | null;
   eetBkp?: string | null;
+  eetPkp?: string | null;
   createdAt: Date;
   items: {
     name: string;
@@ -24,11 +26,6 @@ export type ReceiptForTemplate = {
     category: string;
   }[];
 };
-
-function eetStatusLabel(status: string): string {
-  if (status === "neodeslano") return "Neodesláno do EET";
-  return status;
-}
 
 export function buildReceiptTemplateContext(
   settings: Pick<
@@ -79,7 +76,7 @@ export function buildReceiptTemplateContext(
     })),
     qrSpayd,
     eetStatusLabel: eetStatusLabel(receipt.eetStatus),
-    eetFik: receipt.eetFik ?? null,
+    eetFik: receipt.eetPok ?? null,
     eetBkp: receipt.eetBkp ?? null,
   };
 }

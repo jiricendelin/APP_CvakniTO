@@ -42,6 +42,7 @@ function receiptWhere(tenantId: string, filters: ReceiptListFilters) {
 
   return {
     tenantId,
+    eetStatus: { not: "stornovano" },
     ...(filters.paymentType ? { paymentType: filters.paymentType } : {}),
     ...(Object.keys(createdAt).length ? { createdAt } : {}),
     ...(filters.category

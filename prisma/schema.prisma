@@ -22,6 +22,7 @@ model Tenant {
   invoices     Invoice[]
   invoiceItems InvoiceItem[]
   payments     Payment[]
+  eetRecords   EetRecord[]
 
   @@map("tenants")
 }
@@ -95,13 +96,21 @@ model Receipt {
   paymentType    String   @map("payment_type")
   totalCents     Int      @map("total_cents")
   eetStatus      String   @default("neodeslano") @map("eet_status")
+  eetPok         String?  @map("eet_pok")
+  eetBkp         String?  @map("eet_bkp")
+  eetPkp         String?  @map("eet_pkp")
   printOnIssue   Boolean  @default(false) @map("print_on_issue")
   paidAt         DateTime? @map("paid_at")
+  stornedAt      DateTime? @map("storned_at")
+  correctsReceiptId String? @map("corrects_receipt_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at")
 
   tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   payments Payment[]
   items  ReceiptItem[]
+  eetRecords EetRecord[]
+  correctsReceipt Receipt? @relation("ReceiptCorrection", fields: [correctsReceiptId], references: [id], onDelete: SetNull)
+  correctedBy Receipt[] @relation("ReceiptCorrection")
 
   @@unique([tenantId, number])
   @@unique([tenantId, variableSymbol])
@@ -216,4 +225,24 @@ model Payment {
   @@index([tenantId, matched])
   @@index([tenantId, variableSymbol])
   @@map("payments")
+}
+
+model EetRecord {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  receiptId    String   @map("receipt_id") @db.Uuid
+  messageUuid  String   @map("message_uuid")
+  bkp          String   @default("")
+  pkp          String   @default("")
+  pok          String   @default("")
+  status       String
+  errorMessage String   @default("") @map("error_message")
+  kind         String   @default("sale")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, receiptId])
+  @@map("eet_records")
 }

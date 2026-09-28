@@ -6,6 +6,7 @@ import { prisma } from "../lib/prisma";
 import { getReceiptForTenant } from "../lib/receipts/repository";
 import { getInvoiceForTenant } from "../lib/invoices/repository";
 import { getCustomerForTenant } from "../lib/customers/repository";
+import { getPaymentForTenant } from "../lib/payments/repository";
 
 async function main() {
   const tenants = await prisma.tenant.findMany({ take: 2, select: { id: true } });
@@ -48,6 +49,17 @@ async function main() {
     const crossCust = await getCustomerForTenant(b!.id, customerA.id);
     if (crossCust !== null) {
       throw new Error("Únik: tenant B vidí zákazníka tenant A");
+    }
+  }
+
+  const paymentA = await prisma.payment.findFirst({
+    where: { tenantId: a!.id },
+    select: { id: true },
+  });
+  if (paymentA) {
+    const crossPay = await getPaymentForTenant(b!.id, paymentA.id);
+    if (crossPay !== null) {
+      throw new Error("Únik: tenant B vidí platbu tenant A");
     }
   }
 

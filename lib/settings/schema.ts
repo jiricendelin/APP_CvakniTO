@@ -4,6 +4,7 @@ import { DEFAULT_PRIMARY_COLOR } from "@/lib/color";
 import { DEFAULT_RECEIPT_TEMPLATE } from "@/lib/receipt-template/default-template";
 import { smtpSettingsSchema } from "@/lib/settings/smtp-schema";
 import { mailTemplatesSchema } from "@/lib/mail/template-schema";
+import { eetSettingsSchema } from "@/lib/eet/settings-schema";
 
 const hexColor = z
   .string()
@@ -24,6 +25,7 @@ export const tenantSettingsSchema = z.object({
     .default(DEFAULT_RECEIPT_TEMPLATE),
   ...smtpSettingsSchema.shape,
   ...mailTemplatesSchema.shape,
+  ...eetSettingsSchema.shape,
 });
 
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;

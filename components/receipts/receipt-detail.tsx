@@ -9,6 +9,8 @@ import { formatPragueDateTime } from "@/lib/time/format-prague";
 import { ReceiptDeleteButton } from "./receipt-delete-button";
 import { PaymentQrSection } from "./payment-qr-section";
 import { ReceiptPrintButton } from "./receipt-print-button";
+import { ReceiptEetButtons } from "./receipt-eet-buttons";
+import { eetStatusLabel } from "@/lib/receipts/eet-status";
 import type { ReceiptPrintPayload } from "@/lib/receipt-template/render-print";
 
 export type ReceiptDetailData = {
@@ -18,6 +20,7 @@ export type ReceiptDetailData = {
   paymentType: string;
   totalCents: number;
   eetStatus: string;
+  eetPok?: string | null;
   printOnIssue: boolean;
   createdAt: Date;
   items: {
@@ -29,11 +32,6 @@ export type ReceiptDetailData = {
     lineTotalCents: number;
   }[];
 };
-
-function eetLabel(status: string): string {
-  if (status === "neodeslano") return "Neodesláno do EET";
-  return status;
-}
 
 export function ReceiptDetail({
   receipt,
@@ -72,7 +70,12 @@ export function ReceiptDetail({
         <dt className="text-muted-foreground">Platba</dt>
         <dd>{paymentLabel}</dd>
         <dt className="text-muted-foreground">EET</dt>
-        <dd>{eetLabel(receipt.eetStatus)}</dd>
+        <dd>
+          {eetStatusLabel(receipt.eetStatus)}
+          {receipt.eetPok ? (
+            <span className="mt-0.5 block font-mono text-xs">POK: {receipt.eetPok}</span>
+          ) : null}
+        </dd>
         <dt className="text-muted-foreground">Tisk</dt>
         <dd>{receipt.printOnIssue ? "Požadován při vystavení" : "Ne"}</dd>
       </dl>
@@ -116,6 +119,12 @@ export function ReceiptDetail({
       )}
 
       <ReceiptPrintButton printPayload={printPayload ?? null} />
+
+      <ReceiptEetButtons
+        csrf={csrf}
+        receiptId={receipt.id}
+        eetStatus={receipt.eetStatus}
+      />
 
       {canModify && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

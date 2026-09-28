@@ -47,6 +47,12 @@ export default async function SettingsPage() {
         >
           E-mailové šablony →
         </Link>
+        <Link
+          href="/settings/eet"
+          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
+        >
+          EET 2.0 →
+        </Link>
       </nav>
       <GeneralSettingsForm csrf={csrf} settings={settings} />
     </div>

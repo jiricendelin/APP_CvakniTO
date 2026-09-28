@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["argon2", "handlebars"],
+  serverExternalPackages: ["argon2", "handlebars", "@finitoapp/eet-client"],
   async headers() {
     return [
       {
