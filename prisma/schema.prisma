@@ -21,6 +21,7 @@ model Tenant {
   customers    Customer[]
   invoices     Invoice[]
   invoiceItems InvoiceItem[]
+  payments     Payment[]
 
   @@map("tenants")
 }
@@ -95,9 +96,11 @@ model Receipt {
   totalCents     Int      @map("total_cents")
   eetStatus      String   @default("neodeslano") @map("eet_status")
   printOnIssue   Boolean  @default(false) @map("print_on_issue")
+  paidAt         DateTime? @map("paid_at")
   createdAt      DateTime @default(now()) @map("created_at")
 
   tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payments Payment[]
   items  ReceiptItem[]
 
   @@unique([tenantId, number])
@@ -163,6 +166,7 @@ model Invoice {
   tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    InvoiceItem[]
+  payments Payment[]
 
   @@unique([tenantId, number])
   @@unique([tenantId, variableSymbol])
@@ -189,4 +193,27 @@ model InvoiceItem {
   @@index([invoiceId])
   @@index([tenantId])
   @@map("invoice_items")
+}
+
+model Payment {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  moveId         String   @map("move_id")
+  variableSymbol String   @map("variable_symbol")
+  amountCents    Int      @map("amount_cents")
+  bookedAt       DateTime? @map("booked_at")
+  message        String   @default("")
+  receiptId      String?  @map("receipt_id") @db.Uuid
+  invoiceId      String?  @map("invoice_id") @db.Uuid
+  matched        Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  receipt Receipt? @relation(fields: [receiptId], references: [id], onDelete: SetNull)
+  invoice Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, moveId])
+  @@index([tenantId, matched])
+  @@index([tenantId, variableSymbol])
+  @@map("payments")
 }

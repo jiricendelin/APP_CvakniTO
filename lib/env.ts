@@ -13,4 +13,7 @@ export const env = {
   get isProduction() {
     return process.env.NODE_ENV === "production";
   },
+  get bankIngestToken() {
+    return process.env.BANK_INGEST_TOKEN ?? "";
+  },
 };

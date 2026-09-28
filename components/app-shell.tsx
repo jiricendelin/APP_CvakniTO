@@ -9,6 +9,7 @@ import {
   FileText,
   Users,
   BarChart3,
+  Wallet,
   Settings,
   Menu,
   X,
@@ -31,6 +32,7 @@ const navItems: NavItem[] = [
   { href: "/receipts", label: "Účtenky", icon: Receipt },
   { href: "/invoices", label: "Faktury", icon: FileText },
   { href: "/customers", label: "Zákazníci", icon: Users },
+  { href: "/payments", label: "Platby", icon: Wallet },
   { href: "/reports", label: "Přehledy", icon: BarChart3 },
   { href: "/settings", label: "Nastavení", icon: Settings },
 ];
@@ -95,7 +97,10 @@ function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] print:hidden lg:hidden"
       aria-label="Hlavní navigace"
     >
-      <div className="grid grid-cols-6">
+      <div
+        className="grid"
+        style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+      >
         {navItems.map((item) => {
           const active = isActive(pathname, item.href, item.exact);
           const Icon = item.icon;
