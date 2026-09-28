@@ -29,6 +29,12 @@ export default async function SettingsPage() {
         >
           Číselné řady →
         </Link>
+        <Link
+          href="/settings/receipt-template"
+          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
+        >
+          Šablona účtenky →
+        </Link>
       </nav>
       <GeneralSettingsForm csrf={csrf} settings={settings} />
     </div>

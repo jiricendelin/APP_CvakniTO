@@ -7,7 +7,10 @@ import {
   formToSettings,
   settingsFormSchema,
 } from "@/lib/settings/schema";
-import { saveTenantSettings } from "@/lib/settings/repository";
+import {
+  getTenantSettings,
+  saveTenantSettings,
+} from "@/lib/settings/repository";
 
 export type SettingsFormState = {
   error?: string;
@@ -41,7 +44,11 @@ export async function updateGeneralSettingsAction(
   }
 
   const tenantId = await getTenantId();
-  await saveTenantSettings(tenantId, formToSettings(parsed.data));
+  const current = await getTenantSettings(tenantId);
+  await saveTenantSettings(tenantId, {
+    ...current,
+    ...formToSettings(parsed.data),
+  });
   revalidatePath("/", "layout");
   revalidatePath("/settings");
   return { success: true };

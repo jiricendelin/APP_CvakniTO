@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidIban, normalizeIban } from "@/lib/iban";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/color";
+import { DEFAULT_RECEIPT_TEMPLATE } from "@/lib/receipt-template/default-template";
 
 const hexColor = z
   .string()
@@ -14,6 +15,11 @@ export const tenantSettingsSchema = z.object({
   bankAccount: z.string().max(40).optional().default(""),
   iban: z.string().max(40).optional().default(""),
   primaryColor: hexColor.optional().default(DEFAULT_PRIMARY_COLOR),
+  receiptTemplate: z
+    .string()
+    .max(20_000)
+    .optional()
+    .default(DEFAULT_RECEIPT_TEMPLATE),
 });
 
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;
@@ -47,7 +53,7 @@ export const settingsFormSchema = z
 
 export function formToSettings(
   data: z.infer<typeof settingsFormSchema>
-): TenantSettings {
+): Omit<TenantSettings, "receiptTemplate"> {
   return {
     companyName: data.companyName.trim(),
     companyIco: data.companyIco.trim(),
@@ -57,4 +63,13 @@ export function formToSettings(
     iban: normalizeIban(data.iban),
     primaryColor: data.primaryColor.toLowerCase(),
   };
+}
+
+export const receiptTemplateFormSchema = z.object({
+  receiptTemplate: z.string().max(20_000),
+});
+
+export function getReceiptTemplateSource(settings: TenantSettings): string {
+  const trimmed = settings.receiptTemplate?.trim();
+  return trimmed || DEFAULT_RECEIPT_TEMPLATE;
 }

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["argon2"],
+  serverExternalPackages: ["argon2", "handlebars"],
   async headers() {
     return [
       {
