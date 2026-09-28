@@ -19,6 +19,8 @@ model Tenant {
   receipts     Receipt[]
   receiptItems ReceiptItem[]
   customers    Customer[]
+  invoices     Invoice[]
+  invoiceItems InvoiceItem[]
 
   @@map("tenants")
 }
@@ -137,9 +139,54 @@ model Customer {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
 
   @@index([tenantId])
   @@index([tenantId, name])
   @@map("customers")
+}
+
+model Invoice {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  customerId     String   @map("customer_id") @db.Uuid
+  number         String
+  variableSymbol String   @map("variable_symbol")
+  status         String   @default("koncept")
+  totalCents     Int      @map("total_cents")
+  issuedAt       DateTime @default(now()) @map("issued_at")
+  dueDate        DateTime @map("due_date") @db.Date
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items    InvoiceItem[]
+
+  @@unique([tenantId, number])
+  @@unique([tenantId, variableSymbol])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id             String  @id @default(uuid()) @db.Uuid
+  invoiceId      String  @map("invoice_id") @db.Uuid
+  tenantId       String  @map("tenant_id") @db.Uuid
+  priceItemId    String? @map("price_item_id") @db.Uuid
+  name           String
+  priceCents     Int     @map("price_cents")
+  quantity       Int
+  category       String
+  lineTotalCents Int     @map("line_total_cents")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([tenantId])
+  @@map("invoice_items")
 }
