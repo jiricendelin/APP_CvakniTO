@@ -9,10 +9,15 @@ import { hashPassword } from "../lib/auth/password";
 
 const prisma = new PrismaClient();
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function resolveTenant(tenantArg?: string) {
   if (tenantArg) {
-    const byId = await prisma.tenant.findUnique({ where: { id: tenantArg } });
-    if (byId) return byId;
+    if (UUID_RE.test(tenantArg)) {
+      const byId = await prisma.tenant.findUnique({ where: { id: tenantArg } });
+      if (byId) return byId;
+    }
     const byName = await prisma.tenant.findFirst({
       where: { name: tenantArg },
     });
