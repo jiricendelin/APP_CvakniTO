@@ -5,6 +5,16 @@ import { CSRF_COOKIE } from "@/lib/auth/csrf-shared";
 
 const PUBLIC_PAGE_PATHS = ["/login"];
 
+function isPwaAsset(pathname: string): boolean {
+  return (
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/icon" ||
+    pathname.startsWith("/icon/") ||
+    pathname === "/apple-icon" ||
+    pathname.startsWith("/apple-icon/")
+  );
+}
+
 function randomToken(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -32,6 +42,10 @@ async function resolveUserId(req: NextRequest): Promise<string | null> {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  if (isPwaAsset(pathname)) {
+    return NextResponse.next();
+  }
 
   if (pathname.startsWith("/api")) {
     if (isPublicApi(pathname)) {

@@ -30,6 +30,11 @@
   --radius: 0.5rem;
 }
 
+html,
+body {
+  @apply overflow-x-hidden;
+}
+
 body {
   @apply bg-background text-foreground antialiased;
 }

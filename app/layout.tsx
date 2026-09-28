@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "CvakniTO",
   description: "Pokladní aplikace s fakturací",
+  appleWebApp: {
+    capable: true,
+    title: "CvakniTO",
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport = {
