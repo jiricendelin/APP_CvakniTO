@@ -7,6 +7,9 @@ import { createReceiptFromCart } from "@/lib/receipts/create-receipt";
 import { getReceiptForTenant } from "@/lib/receipts/repository";
 import { getTenantSettings } from "@/lib/settings/repository";
 import { buildSpaydForReceipt } from "@/lib/spayd";
+import { renderReceiptPrintPayload } from "@/lib/receipt-template/render-print";
+import type { ReceiptPrintPayload } from "@/lib/receipt-template/render-print";
+import type { PaymentType } from "@/lib/receipts/payment-type";
 
 export type CheckoutState = {
   error?: string;
@@ -16,7 +19,44 @@ export type CheckoutState = {
   qrMissingIban?: boolean;
   qrVariableSymbol?: string;
   qrTotalCents?: number;
+  printPayload?: ReceiptPrintPayload | null;
 };
+
+async function buildCheckoutReceiptState(
+  tenantId: string,
+  receiptId: string,
+  paymentType: PaymentType,
+  printOnIssue: boolean
+): Promise<CheckoutState> {
+  const [settings, receipt] = await Promise.all([
+    getTenantSettings(tenantId),
+    getReceiptForTenant(tenantId, receiptId),
+  ]);
+  if (!receipt) {
+    return { receiptId };
+  }
+
+  const state: CheckoutState = { receiptId };
+
+  if (paymentType === "qr") {
+    state.qrSpayd = buildSpaydForReceipt({
+      iban: settings.iban,
+      totalCents: receipt.totalCents,
+      variableSymbol: receipt.variableSymbol,
+      receiptNumber: receipt.number,
+      companyName: settings.companyName,
+    });
+    state.qrMissingIban = !settings.iban?.trim();
+    state.qrVariableSymbol = receipt.variableSymbol;
+    state.qrTotalCents = receipt.totalCents;
+  }
+
+  if (printOnIssue) {
+    state.printPayload = renderReceiptPrintPayload(settings, receipt);
+  }
+
+  return state;
+}
 
 export async function checkoutAction(
   _prev: CheckoutState,
@@ -57,33 +97,12 @@ export async function checkoutAction(
       cart: parsed.data.cart,
     });
 
-    if (parsed.data.paymentType !== "qr") {
-      return { receiptId };
-    }
-
-    const [settings, receipt] = await Promise.all([
-      getTenantSettings(tenantId),
-      getReceiptForTenant(tenantId, receiptId),
-    ]);
-    if (!receipt) {
-      return { receiptId };
-    }
-
-    const qrSpayd = buildSpaydForReceipt({
-      iban: settings.iban,
-      totalCents: receipt.totalCents,
-      variableSymbol: receipt.variableSymbol,
-      receiptNumber: receipt.number,
-      companyName: settings.companyName,
-    });
-
-    return {
+    return buildCheckoutReceiptState(
+      tenantId,
       receiptId,
-      qrSpayd,
-      qrMissingIban: !settings.iban?.trim(),
-      qrVariableSymbol: receipt.variableSymbol,
-      qrTotalCents: receipt.totalCents,
-    };
+      parsed.data.paymentType,
+      parsed.data.printOnIssue
+    );
   } catch (e) {
     return {
       error:

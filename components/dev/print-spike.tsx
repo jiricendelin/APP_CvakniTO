@@ -19,11 +19,16 @@ import {
 } from "@/lib/print/escpos";
 import { renderQrToCanvas } from "@/lib/print/raster-client";
 import {
+  attachBleWriterForPrint,
+  attachSerialPortForPrint,
+} from "@/lib/print/receipt-printer";
+import {
   isWebBluetoothSupported,
   isWebSerialSupported,
   openSerialPort,
   writeToSerialPort,
 } from "@/lib/print/serial-writer";
+import { savePrinterBaudRate } from "@/lib/print/printer-prefs";
 
 const STORAGE_KEY = "cvaknito.printSpikeChoice";
 
@@ -87,6 +92,8 @@ export function PrintSpike() {
       await openSerialPort(port, baudRate);
       portRef.current = port;
       bleWriteRef.current = null;
+      attachSerialPortForPrint(port);
+      savePrinterBaudRate(baudRate);
       setStatus(`Web Serial připojeno (${baudRate} baud)`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Připojení Web Serial selhalo.");
@@ -142,6 +149,8 @@ export function PrintSpike() {
         }
       };
       portRef.current = null;
+      attachSerialPortForPrint(null);
+      attachBleWriterForPrint(bleWriteRef.current);
       setStatus(`Web Bluetooth: ${device.name ?? "tiskárna"}`);
     } catch (e) {
       setError(
@@ -160,6 +169,8 @@ export function PrintSpike() {
         portRef.current = null;
       }
       bleWriteRef.current = null;
+      attachSerialPortForPrint(null);
+      attachBleWriterForPrint(null);
       setStatus("Odpojeno");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Odpojení selhalo.");

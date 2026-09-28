@@ -5,6 +5,7 @@ import { getReceiptForTenant } from "@/lib/receipts/repository";
 import { canModifyReceipt } from "@/lib/receipts/eet-status";
 import { getTenantSettings } from "@/lib/settings/repository";
 import { buildSpaydForReceipt } from "@/lib/spayd";
+import { renderReceiptPrintPayload } from "@/lib/receipt-template/render-print";
 import { ReceiptDetail } from "@/components/receipts/receipt-detail";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +34,11 @@ export default async function ReceiptDetailPage({
         })
       : null;
 
+  const printPayload = renderReceiptPrintPayload(settings, receipt);
+
   return (
     <ReceiptDetail
+      printPayload={printPayload}
       canModify={canModifyReceipt(receipt.eetStatus)}
       csrf={csrf}
       qrSpayd={qrSpayd}

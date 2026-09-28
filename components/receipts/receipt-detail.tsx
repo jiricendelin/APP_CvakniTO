@@ -8,6 +8,8 @@ import {
 import { formatPragueDateTime } from "@/lib/time/format-prague";
 import { ReceiptDeleteButton } from "./receipt-delete-button";
 import { PaymentQrSection } from "./payment-qr-section";
+import { ReceiptPrintButton } from "./receipt-print-button";
+import type { ReceiptPrintPayload } from "@/lib/receipt-template/render-print";
 
 export type ReceiptDetailData = {
   id: string;
@@ -39,12 +41,14 @@ export function ReceiptDetail({
   csrf,
   qrSpayd,
   qrMissingIban,
+  printPayload,
 }: {
   receipt: ReceiptDetailData;
   canModify: boolean;
   csrf: string;
   qrSpayd?: string | null;
   qrMissingIban?: boolean;
+  printPayload?: ReceiptPrintPayload | null;
 }) {
   const paymentLabel = isPaymentType(receipt.paymentType)
     ? PAYMENT_TYPE_LABELS[receipt.paymentType]
@@ -110,6 +114,8 @@ export function ReceiptDetail({
           missingIban={qrMissingIban}
         />
       )}
+
+      <ReceiptPrintButton printPayload={printPayload ?? null} />
 
       {canModify && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

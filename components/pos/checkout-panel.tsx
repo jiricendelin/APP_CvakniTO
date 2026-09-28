@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import type { ReceiptPrintPayload } from "@/lib/receipt-template/render-print";
+import { printReceiptPayload } from "@/lib/print/receipt-printer";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import {
@@ -53,10 +55,22 @@ export function CheckoutPanel({
     checkoutAction,
     {}
   );
+  const [printNotice, setPrintNotice] = useState<string | null>(null);
+  const lastPrintedReceiptId = useRef<string | null>(null);
 
   const qrPending =
     Boolean(state.receiptId) &&
     (state.qrSpayd !== undefined || state.qrMissingIban);
+
+  useEffect(() => {
+    if (!state.receiptId || !state.printPayload) return;
+    if (lastPrintedReceiptId.current === state.receiptId) return;
+    lastPrintedReceiptId.current = state.receiptId;
+    const payload: ReceiptPrintPayload = state.printPayload;
+    void printReceiptPayload(payload).then((result) => {
+      if (!result.ok) setPrintNotice(result.message);
+    });
+  }, [state.receiptId, state.printPayload]);
 
   useEffect(() => {
     if (!state.receiptId || qrPending) return;
@@ -83,6 +97,11 @@ export function CheckoutPanel({
           variableSymbol={state.qrVariableSymbol ?? ""}
           missingIban={state.qrMissingIban}
         />
+        {printNotice && (
+          <p className="text-sm text-amber-800" role="status">
+            {printNotice}
+          </p>
+        )}
         <button
           type="button"
           onClick={finishQrFlow}
@@ -137,6 +156,11 @@ export function CheckoutPanel({
         {state.error && (
           <p className="text-sm text-red-700" role="alert">
             {state.error}
+          </p>
+        )}
+        {printNotice && (
+          <p className="text-sm text-amber-800" role="status">
+            {printNotice}
           </p>
         )}
       </form>
