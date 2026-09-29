@@ -54,6 +54,7 @@ export default async function ReceiptDetailPage({
         eetStatus: receipt.eetStatus,
         eetPok: receipt.eetPok,
         printOnIssue: receipt.printOnIssue,
+        paidAt: receipt.paidAt,
         createdAt: receipt.createdAt,
         items: receipt.items.map((item) => ({
           id: item.id,

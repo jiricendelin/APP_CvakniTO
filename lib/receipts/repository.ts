@@ -24,6 +24,7 @@ export async function listReceiptsForTenant(
       paymentType: true,
       totalCents: true,
       eetStatus: true,
+      paidAt: true,
       createdAt: true,
     },
     take: 200,

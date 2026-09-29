@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   updateEmailTemplatesAction,
   type EmailTemplatesFormState,
@@ -89,9 +88,6 @@ export function EmailTemplatesForm({
 
   return (
     <div className="mx-auto w-full max-w-lg space-y-4">
-      <Link href="/settings" className="text-sm text-primary hover:underline">
-        ← Nastavení
-      </Link>
       <p className="text-xs text-muted-foreground">Proměnné: {VARS}</p>
       <form action={formAction} className="space-y-4">
         <CsrfField token={csrf} />

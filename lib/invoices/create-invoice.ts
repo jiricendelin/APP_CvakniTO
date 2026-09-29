@@ -1,8 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { isPriceCategory } from "@/lib/pricelist/categories";
-import { allocateSequenceNumberInTransaction } from "@/lib/sequences/repository";
-import { ensureSequencesForTenant } from "@/lib/sequences/repository";
-import { receiptNumberToVariableSymbol } from "@/lib/receipts/variable-symbol";
 import { pragueStartOfDayUtc } from "@/lib/time/prague";
 import type { CreateInvoiceLine } from "./invoice-schema";
 
@@ -13,6 +10,11 @@ export type CreateInvoiceInput = {
   lines: CreateInvoiceLine[];
 };
 
+function newDraftNumber(): string {
+  return `KONCEPT-${Date.now().toString(36).toUpperCase()}`;
+}
+
+/** Koncept: dočasné číslo, bez spotřeby číselné řady. Ostré číslo+VS přidělí až `issueInvoiceAction`. */
 export async function createInvoice(input: CreateInvoiceInput): Promise<string> {
   const dueDate = pragueStartOfDayUtc(input.dueDateYmd);
   if (!dueDate) {
@@ -46,40 +48,31 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<string> 
     throw new Error("Součet faktury musí být větší než nula.");
   }
 
-  await ensureSequencesForTenant(input.tenantId);
+  const draftNumber = newDraftNumber();
 
-  return prisma.$transaction(async (tx) => {
-    const number = await allocateSequenceNumberInTransaction(
-      tx,
-      input.tenantId,
-      "invoice"
-    );
-    const variableSymbol = receiptNumberToVariableSymbol(number);
-
-    const invoice = await tx.invoice.create({
-      data: {
-        tenantId: input.tenantId,
-        customerId: input.customerId,
-        number,
-        variableSymbol,
-        status: "koncept",
-        totalCents,
-        dueDate,
-        items: {
-          create: snapshotLines.map((line) => ({
-            tenantId: input.tenantId,
-            priceItemId: line.priceItemId,
-            name: line.name,
-            priceCents: line.priceCents,
-            quantity: line.quantity,
-            category: line.category,
-            lineTotalCents: line.lineTotalCents,
-          })),
-        },
+  const invoice = await prisma.invoice.create({
+    data: {
+      tenantId: input.tenantId,
+      customerId: input.customerId,
+      number: draftNumber,
+      variableSymbol: draftNumber,
+      status: "koncept",
+      totalCents,
+      dueDate,
+      items: {
+        create: snapshotLines.map((line) => ({
+          tenantId: input.tenantId,
+          priceItemId: line.priceItemId,
+          name: line.name,
+          priceCents: line.priceCents,
+          quantity: line.quantity,
+          category: line.category,
+          lineTotalCents: line.lineTotalCents,
+        })),
       },
-      select: { id: true },
-    });
-
-    return invoice.id;
+    },
+    select: { id: true },
   });
+
+  return invoice.id;
 }

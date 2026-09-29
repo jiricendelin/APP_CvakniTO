@@ -3,7 +3,6 @@
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   createPriceItemAction,
   setPriceItemActiveAction,
@@ -271,13 +270,6 @@ export function PricelistManager({
   return (
     <div className="mx-auto w-full max-w-lg space-y-6">
       <div className="space-y-2">
-        <Link
-          href="/settings"
-          className="text-sm text-primary hover:underline"
-        >
-          ← Nastavení
-        </Link>
-        <h1 className="text-xl font-semibold">Ceník</h1>
         <p className="text-sm text-muted-foreground">
           Položky pro pokladnu. Neaktivní se v pokladně neukážou.
         </p>

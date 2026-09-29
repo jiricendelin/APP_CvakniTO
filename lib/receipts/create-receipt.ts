@@ -87,6 +87,7 @@ export async function createReceiptFromCart(
         totalCents,
         eetStatus: "neodeslano",
         printOnIssue: input.printOnIssue,
+        paidAt: input.paymentType === "hotove" ? new Date() : null,
         items: {
           create: snapshotLines.map((line) => ({
             tenantId: input.tenantId,

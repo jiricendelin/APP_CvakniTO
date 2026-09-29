@@ -43,7 +43,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:opacity-60 sm:w-auto"
     >
-      {pending ? "Ukládám fakturu…" : "Vystavit fakturu"}
+      {pending ? "Ukládám koncept…" : "Vytvořit koncept"}
     </button>
   );
 }

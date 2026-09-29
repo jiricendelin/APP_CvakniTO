@@ -112,54 +112,68 @@ function CustomerFields({
 }) {
   return (
     <div className="space-y-3">
-      <input
-        name="ico"
-        placeholder="IČO"
-        defaultValue={defaults?.ico ?? ""}
-        inputMode="numeric"
-        className={fieldClass}
-      />
+      <label className="block text-xs">
+        IČO
+        <input
+          name="ico"
+          defaultValue={defaults?.ico ?? ""}
+          inputMode="numeric"
+          className={`${fieldClass} mt-1`}
+        />
+      </label>
       <AresHint formId={formId} />
-      <input
-        name="name"
-        placeholder="Název / jméno"
-        required
-        defaultValue={defaults?.name ?? ""}
-        className={fieldClass}
-      />
-      <input
-        name="dic"
-        placeholder="DIČ"
-        defaultValue={defaults?.dic ?? ""}
-        className={fieldClass}
-      />
-      <textarea
-        name="address"
-        placeholder="Adresa"
-        rows={2}
-        defaultValue={defaults?.address ?? ""}
-        className={fieldClass}
-      />
-      <input
-        name="email"
-        type="email"
-        placeholder="E-mail"
-        defaultValue={defaults?.email ?? ""}
-        className={fieldClass}
-      />
-      <input
-        name="phone"
-        placeholder="Telefon"
-        defaultValue={defaults?.phone ?? ""}
-        className={fieldClass}
-      />
-      <textarea
-        name="note"
-        placeholder="Poznámka"
-        rows={2}
-        defaultValue={defaults?.note ?? ""}
-        className={fieldClass}
-      />
+      <label className="block text-xs">
+        Název / jméno
+        <input
+          name="name"
+          required
+          defaultValue={defaults?.name ?? ""}
+          className={`${fieldClass} mt-1`}
+        />
+      </label>
+      <label className="block text-xs">
+        DIČ
+        <input
+          name="dic"
+          defaultValue={defaults?.dic ?? ""}
+          className={`${fieldClass} mt-1`}
+        />
+      </label>
+      <label className="block text-xs">
+        Adresa
+        <textarea
+          name="address"
+          rows={2}
+          defaultValue={defaults?.address ?? ""}
+          className={`${fieldClass} mt-1`}
+        />
+      </label>
+      <label className="block text-xs">
+        E-mail
+        <input
+          name="email"
+          type="email"
+          defaultValue={defaults?.email ?? ""}
+          className={`${fieldClass} mt-1`}
+        />
+      </label>
+      <label className="block text-xs">
+        Telefon
+        <input
+          name="phone"
+          defaultValue={defaults?.phone ?? ""}
+          className={`${fieldClass} mt-1`}
+        />
+      </label>
+      <label className="block text-xs">
+        Poznámka
+        <textarea
+          name="note"
+          rows={2}
+          defaultValue={defaults?.note ?? ""}
+          className={`${fieldClass} mt-1`}
+        />
+      </label>
     </div>
   );
 }

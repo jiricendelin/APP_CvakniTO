@@ -1,60 +1,64 @@
-import Link from "next/link";
 import { getCsrfToken } from "@/lib/auth/csrf";
-import { getTenantId } from "@/lib/auth";
+import { requireUser, getTenantId } from "@/lib/auth";
 import { getTenantSettings } from "@/lib/settings/repository";
-import { GeneralSettingsForm } from "@/components/settings/general-settings-form";
+import { listPriceItems, seedDefaultPriceItemsIfEmpty } from "@/lib/pricelist/repository";
+import { listSequences, sequencePreview } from "@/lib/sequences/repository";
+import { isSequenceKind } from "@/lib/sequences/kinds";
+import { tenantCertExists } from "@/lib/eet/cert-path";
+import { SettingsTabs } from "@/components/settings/settings-tabs";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [csrf, tenantId] = await Promise.all([getCsrfToken(), getTenantId()]);
-  const settings = await getTenantSettings(tenantId);
+  const user = await requireUser();
+  const tenantId = await getTenantId();
+  await seedDefaultPriceItemsIfEmpty(tenantId);
+
+  const [csrf, settings, priceItems, sequences, hasCert] = await Promise.all([
+    getCsrfToken(),
+    getTenantSettings(tenantId),
+    listPriceItems(tenantId),
+    listSequences(tenantId),
+    tenantCertExists(tenantId),
+  ]);
+
+  const sequenceRows = sequences
+    .filter(
+      (s): s is (typeof sequences)[number] & { kind: "receipt" | "invoice" } =>
+        isSequenceKind(s.kind)
+    )
+    .map((s) => ({
+      kind: s.kind,
+      prefix: s.prefix,
+      format: s.format,
+      resetYearly: s.resetYearly,
+      preview: sequencePreview(s),
+      nextValue: s.nextValue,
+    }));
 
   return (
-    <div className="space-y-2">
-      <h1 className="text-xl font-semibold">Nastavení</h1>
-      <p className="text-sm text-muted-foreground">
-        Firma, platební údaje a barva aplikace.
-      </p>
-      <nav className="flex flex-col gap-2 text-sm">
-        <Link
-          href="/settings/pricelist"
-          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
-        >
-          Ceník →
-        </Link>
-        <Link
-          href="/settings/sequences"
-          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
-        >
-          Číselné řady →
-        </Link>
-        <Link
-          href="/settings/receipt-template"
-          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
-        >
-          Šablona účtenky →
-        </Link>
-        <Link
-          href="/settings/smtp"
-          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
-        >
-          E-mail (SMTP) →
-        </Link>
-        <Link
-          href="/settings/email-templates"
-          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
-        >
-          E-mailové šablony →
-        </Link>
-        <Link
-          href="/settings/eet"
-          className="rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
-        >
-          EET 2.0 →
-        </Link>
-      </nav>
-      <GeneralSettingsForm csrf={csrf} settings={settings} />
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold">Nastavení</h1>
+        <p className="text-sm text-muted-foreground">
+          Firma, platební údaje, ceník, číselné řady, e-maily a EET.
+        </p>
+      </div>
+      <SettingsTabs
+        csrf={csrf}
+        settings={settings}
+        priceItems={priceItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          priceCents: item.priceCents,
+          category: item.category,
+          active: item.active,
+          sortOrder: item.sortOrder,
+        }))}
+        sequenceRows={sequenceRows}
+        hasCert={hasCert}
+        userEmail={user.email}
+      />
     </div>
   );
 }

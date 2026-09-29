@@ -63,7 +63,7 @@ export async function updateSmtpSettingsAction(
     smtpFromName: parsed.data.smtpFromName.trim(),
   });
 
-  revalidatePath("/settings/smtp");
+  revalidatePath("/settings");
   return { success: true };
 }
 

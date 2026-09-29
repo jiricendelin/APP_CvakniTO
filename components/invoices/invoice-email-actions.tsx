@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { Mail } from "lucide-react";
 import {
   sendInvoiceEmailAction,
   sendReminderEmailAction,
@@ -9,19 +9,7 @@ import {
   type InvoiceEmailState,
 } from "@/app/(app)/invoices/email-actions";
 import { CsrfField } from "@/components/csrf-field";
-
-function EmailButton({ label }: { label: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-60"
-    >
-      {pending ? "Odesílám…" : label}
-    </button>
-  );
-}
+import { SubmitButton } from "@/components/ui/submit-button";
 
 function EmailForm({
   csrf,
@@ -46,9 +34,12 @@ function EmailForm({
     <form action={formAction} className="space-y-1">
       <CsrfField token={csrf} />
       <input type="hidden" name="invoiceId" value={invoiceId} />
-      <EmailButton label={label} />
+      <SubmitButton variant="outline" pendingText="Odesílám…">
+        <Mail className="h-4 w-4" />
+        {label}
+      </SubmitButton>
       {state.error && (
-        <p className="text-xs text-red-700" role="alert">
+        <p className="text-xs text-destructive" role="alert">
           {state.error}
         </p>
       )}
@@ -69,28 +60,25 @@ export function InvoiceEmailActions({
   invoiceId: string;
 }) {
   return (
-    <section className="space-y-2 rounded-lg border border-border p-4">
-      <h2 className="text-sm font-medium">E-mail zákazníkovi</h2>
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <EmailForm
-          csrf={csrf}
-          invoiceId={invoiceId}
-          action={sendInvoiceEmailAction}
-          label="Odeslat fakturu (PDF)"
-        />
-        <EmailForm
-          csrf={csrf}
-          invoiceId={invoiceId}
-          action={sendReminderEmailAction}
-          label="Upomínka"
-        />
-        <EmailForm
-          csrf={csrf}
-          invoiceId={invoiceId}
-          action={sendThanksEmailAction}
-          label="Poděkování"
-        />
-      </div>
-    </section>
+    <>
+      <EmailForm
+        csrf={csrf}
+        invoiceId={invoiceId}
+        action={sendInvoiceEmailAction}
+        label="Odeslat fakturu"
+      />
+      <EmailForm
+        csrf={csrf}
+        invoiceId={invoiceId}
+        action={sendReminderEmailAction}
+        label="Upomínka"
+      />
+      <EmailForm
+        csrf={csrf}
+        invoiceId={invoiceId}
+        action={sendThanksEmailAction}
+        label="Poděkování"
+      />
+    </>
   );
 }

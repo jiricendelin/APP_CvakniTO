@@ -72,6 +72,9 @@ async function sendInvoiceMail(
   if (!bundle) return { error: "Faktura nenalezena." };
 
   const { invoice, settings } = bundle;
+  if (invoice.status === "koncept") {
+    return { error: "Fakturu nejdřív vystavte." };
+  }
   const to = invoice.customer.email.trim();
   if (!to) {
     return { error: "U zákazníka chybí e-mail." };
@@ -112,10 +115,10 @@ async function sendInvoiceMail(
     return { error: formatSmtpError(e) };
   }
 
-  if (markSent && invoice.status === "koncept") {
+  if (markSent && !invoice.sentAt) {
     await prisma.invoice.update({
       where: { id: invoice.id },
-      data: { status: "odeslana" },
+      data: { sentAt: new Date() },
     });
   }
 

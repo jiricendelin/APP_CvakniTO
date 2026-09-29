@@ -1,11 +1,9 @@
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { formatCzk } from "@/lib/money";
-import {
-  INVOICE_STATUS_LABELS,
-  resolveInvoiceStatus,
-  type InvoiceStatus,
-} from "@/lib/invoices/status";
+import { RESOLVED_STATUS_LABELS, RESOLVED_STATUS_VARIANTS, resolveInvoiceStatus } from "@/lib/invoices/status";
 import { formatPragueDate } from "@/lib/time/format-prague";
+import { Badge } from "@/components/ui/badge";
 
 export type InvoiceListRow = {
   id: string;
@@ -14,6 +12,7 @@ export type InvoiceListRow = {
   status: string;
   dueDate: Date;
   issuedAt: Date;
+  paidAt: Date | null;
   customerName: string;
 };
 
@@ -38,7 +37,6 @@ export function InvoicesList({ invoices }: { invoices: InvoiceListRow[] }) {
         <ul className="divide-y divide-border rounded-lg border border-border">
           {invoices.map((inv) => {
             const status = resolveInvoiceStatus(inv.status, inv.dueDate);
-            const statusLabel = INVOICE_STATUS_LABELS[status as InvoiceStatus];
             return (
               <li key={inv.id}>
                 <Link
@@ -46,12 +44,22 @@ export function InvoicesList({ invoices }: { invoices: InvoiceListRow[] }) {
                   className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium">{inv.number}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{inv.number}</p>
+                      {inv.paidAt && (
+                        <CheckCircle2
+                          className="h-4 w-4 shrink-0 text-green-700"
+                          aria-label="Uhrazeno"
+                        />
+                      )}
+                    </div>
                     <p className="truncate text-sm text-muted-foreground">
                       {inv.customerName} · splatnost{" "}
                       {formatPragueDate(inv.dueDate)}
                     </p>
-                    <p className="text-xs text-muted-foreground">{statusLabel}</p>
+                    <Badge variant={RESOLVED_STATUS_VARIANTS[status]} className="mt-1">
+                      {RESOLVED_STATUS_LABELS[status]}
+                    </Badge>
                   </div>
                   <p className="shrink-0 tabular-nums font-medium">
                     {formatCzk(inv.totalCents)}

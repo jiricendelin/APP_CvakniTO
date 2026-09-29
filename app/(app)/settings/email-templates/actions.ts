@@ -46,6 +46,6 @@ export async function updateEmailTemplatesAction(
   const current = await getTenantSettings(tenantId);
   await saveTenantSettings(tenantId, { ...current, ...parsed.data });
 
-  revalidatePath("/settings/email-templates");
+  revalidatePath("/settings");
   return { success: true };
 }

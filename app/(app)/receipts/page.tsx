@@ -23,6 +23,7 @@ export default async function ReceiptsPage({
         paymentType: r.paymentType,
         totalCents: r.totalCents,
         eetStatus: r.eetStatus,
+        paidAt: r.paidAt,
         createdAt: r.createdAt,
       }))}
     />

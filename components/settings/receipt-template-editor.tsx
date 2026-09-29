@@ -3,7 +3,6 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   updateReceiptTemplateAction,
   type ReceiptTemplateFormState,
@@ -63,10 +62,6 @@ export function ReceiptTemplateEditor({
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
-      <Link href="/settings" className="text-sm text-primary hover:underline">
-        ← Nastavení
-      </Link>
-
       <form action={formAction} className="space-y-4">
         <CsrfField token={csrf} />
         <div className="space-y-2">

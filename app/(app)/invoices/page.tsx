@@ -17,6 +17,7 @@ export default async function InvoicesPage() {
         status: inv.status,
         dueDate: inv.dueDate,
         issuedAt: inv.issuedAt,
+        paidAt: inv.paidAt,
         customerName: inv.customer.name,
       }))}
     />

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2, Circle } from "lucide-react";
 import { formatCzk } from "@/lib/money";
 import { PRICE_CATEGORY_LABELS, isPriceCategory } from "@/lib/pricelist/categories";
 import {
@@ -22,6 +23,7 @@ export type ReceiptDetailData = {
   eetStatus: string;
   eetPok?: string | null;
   printOnIssue: boolean;
+  paidAt: Date | null;
   createdAt: Date;
   items: {
     id: string;
@@ -58,7 +60,14 @@ export function ReceiptDetail({
         <Link href="/" className="text-sm text-primary hover:underline">
           ← Pokladna
         </Link>
-        <h1 className="text-xl font-semibold">Účtenka {receipt.number}</h1>
+        <h1 className="flex items-center gap-2 text-xl font-semibold">
+          Účtenka {receipt.number}
+          {receipt.paidAt ? (
+            <CheckCircle2 className="h-5 w-5 text-green-700" aria-label="Uhrazeno" />
+          ) : (
+            <Circle className="h-5 w-5 text-muted-foreground" aria-label="Neuhrazeno" />
+          )}
+        </h1>
         <p className="text-sm text-muted-foreground">
           {formatPragueDateTime(receipt.createdAt)}
         </p>
@@ -69,6 +78,10 @@ export function ReceiptDetail({
         <dd className="font-mono font-medium">{receipt.variableSymbol}</dd>
         <dt className="text-muted-foreground">Platba</dt>
         <dd>{paymentLabel}</dd>
+        <dt className="text-muted-foreground">Uhrazeno</dt>
+        <dd>
+          {receipt.paidAt ? formatPragueDateTime(receipt.paidAt) : "Neuhrazeno"}
+        </dd>
         <dt className="text-muted-foreground">EET</dt>
         <dd>
           {eetStatusLabel(receipt.eetStatus)}

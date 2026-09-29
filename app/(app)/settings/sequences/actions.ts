@@ -71,6 +71,6 @@ export async function updateSequenceAction(
     },
   });
 
-  revalidatePath("/settings/sequences");
+  revalidatePath("/settings");
   return { success: true };
 }

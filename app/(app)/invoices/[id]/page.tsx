@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getInvoiceForTenant } from "@/lib/invoices/repository";
+import { listCustomersForTenant } from "@/lib/customers/repository";
 import { InvoiceDetail } from "@/components/invoices/invoice-detail";
 import { InvoiceEmailActions } from "@/components/invoices/invoice-email-actions";
 
@@ -13,13 +14,19 @@ export default async function InvoiceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [tenantId, csrf] = await Promise.all([getTenantId(), getCsrfToken()]);
-  const invoice = await getInvoiceForTenant(tenantId, id);
+  const tenantId = await getTenantId();
+  const [csrf, invoice, customers] = await Promise.all([
+    getCsrfToken(),
+    getInvoiceForTenant(tenantId, id),
+    listCustomersForTenant(tenantId),
+  ]);
   if (!invoice) notFound();
 
   return (
-    <div className="space-y-6">
     <InvoiceDetail
+      csrf={csrf}
+      customers={customers.map((c) => ({ id: c.id, name: c.name }))}
+      sendSlot={<InvoiceEmailActions csrf={csrf} invoiceId={invoice.id} />}
       invoice={{
         id: invoice.id,
         number: invoice.number,
@@ -28,7 +35,10 @@ export default async function InvoiceDetailPage({
         totalCents: invoice.totalCents,
         issuedAt: invoice.issuedAt,
         dueDate: invoice.dueDate,
+        sentAt: invoice.sentAt,
+        paidAt: invoice.paidAt,
         customer: {
+          id: invoice.customer.id,
           name: invoice.customer.name,
           ico: invoice.customer.ico,
           dic: invoice.customer.dic,
@@ -37,17 +47,19 @@ export default async function InvoiceDetailPage({
           phone: invoice.customer.phone,
         },
         items: invoice.items.map((item) => ({
+          id: item.id,
           name: item.name,
           quantity: item.quantity,
           priceCents: item.priceCents,
-          lineTotalCents: item.lineTotalCents,
           category: item.category,
+        })),
+        payments: invoice.payments.map((p) => ({
+          id: p.id,
+          amountCents: p.amountCents,
+          bookedAt: p.bookedAt,
+          message: p.message,
         })),
       }}
     />
-    <div className="mx-auto w-full max-w-lg">
-      <InvoiceEmailActions csrf={csrf} invoiceId={invoice.id} />
-    </div>
-    </div>
   );
 }

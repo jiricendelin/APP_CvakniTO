@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   updateSequenceAction,
   type SequenceActionState,
@@ -131,13 +130,6 @@ export function SequencesManager({
   return (
     <div className="mx-auto w-full max-w-lg space-y-6">
       <div className="space-y-2">
-        <Link
-          href="/settings"
-          className="text-sm text-primary hover:underline"
-        >
-          ← Nastavení
-        </Link>
-        <h1 className="text-xl font-semibold">Číselné řady</h1>
         <p className="text-sm text-muted-foreground">
           Formát čísla účtenky a faktury. Přidělení probíhá atomicky při
           vystavení (R11 / faktury).

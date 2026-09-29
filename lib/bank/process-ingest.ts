@@ -55,7 +55,7 @@ export async function processBankIngest(
     if (invoice) {
       await tx.invoice.update({
         where: { id: invoice.id },
-        data: { status: "zaplacena" },
+        data: { status: "zaplacena", paidAt: now },
       });
     }
     if (receipt) {

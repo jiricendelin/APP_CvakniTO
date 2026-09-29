@@ -1,11 +1,17 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InvoiceHeaderCard } from "@/components/invoices/invoice-header-card";
+import { ItemsCard } from "@/components/invoices/items-card";
+import { InvoiceActions } from "@/components/invoices/invoice-actions";
 import { formatCzk } from "@/lib/money";
 import {
-  INVOICE_STATUS_LABELS,
+  RESOLVED_STATUS_LABELS,
+  RESOLVED_STATUS_VARIANTS,
   resolveInvoiceStatus,
-  type InvoiceStatus,
 } from "@/lib/invoices/status";
-import { PRICE_CATEGORY_LABELS, isPriceCategory } from "@/lib/pricelist/categories";
 import { formatPragueDate, formatPragueDateTime } from "@/lib/time/format-prague";
 
 export type InvoiceDetailData = {
@@ -16,7 +22,10 @@ export type InvoiceDetailData = {
   totalCents: number;
   issuedAt: Date;
   dueDate: Date;
+  sentAt: Date | null;
+  paidAt: Date | null;
   customer: {
+    id: string;
     name: string;
     ico: string;
     dic: string;
@@ -25,86 +34,125 @@ export type InvoiceDetailData = {
     phone: string;
   };
   items: {
+    id: string;
     name: string;
     quantity: number;
     priceCents: number;
-    lineTotalCents: number;
     category: string;
+  }[];
+  payments: {
+    id: string;
+    amountCents: number;
+    bookedAt: Date | null;
+    message: string;
   }[];
 };
 
-export function InvoiceDetail({ invoice }: { invoice: InvoiceDetailData }) {
+export function InvoiceDetail({
+  invoice,
+  csrf,
+  customers,
+  sendSlot,
+}: {
+  invoice: InvoiceDetailData;
+  csrf: string;
+  customers: { id: string; name: string }[];
+  sendSlot?: React.ReactNode;
+}) {
   const status = resolveInvoiceStatus(invoice.status, invoice.dueDate);
-  const statusLabel = INVOICE_STATUS_LABELS[status as InvoiceStatus];
+  const statusLabel = RESOLVED_STATUS_LABELS[status];
+  const editable = invoice.status === "koncept";
+  const paidTotal = invoice.payments.reduce((s, p) => s + p.amountCents, 0);
 
   return (
-    <div className="mx-auto w-full max-w-lg space-y-6">
-      <Link href="/invoices" className="text-sm text-primary hover:underline">
-        ← Faktury
+    <div>
+      <Link
+        href="/invoices"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Zpět na faktury
       </Link>
 
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Faktura {invoice.number}</h1>
-        <p className="text-sm text-muted-foreground">
-          Vystaveno {formatPragueDateTime(invoice.issuedAt)}
-        </p>
+      <PageHeader
+        title={`Faktura ${invoice.number}`}
+        actions={
+          <InvoiceActions csrf={csrf} invoice={invoice} sendSlot={sendSlot} />
+        }
+      />
+
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <Badge variant={RESOLVED_STATUS_VARIANTS[status]}>{statusLabel}</Badge>
+        <span className="text-sm text-muted-foreground">
+          VS {invoice.variableSymbol}
+        </span>
+        {invoice.status !== "koncept" && (
+          <span className="text-sm text-muted-foreground">
+            Vystaveno {formatPragueDateTime(invoice.issuedAt)}
+          </span>
+        )}
+        {invoice.sentAt && (
+          <span className="text-sm text-muted-foreground">
+            Odesláno {formatPragueDateTime(invoice.sentAt)}
+          </span>
+        )}
+        {invoice.paidAt && (
+          <span className="text-sm text-muted-foreground">
+            Uhrazeno {formatPragueDate(invoice.paidAt)}
+          </span>
+        )}
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-        <dt className="text-muted-foreground">Stav</dt>
-        <dd>{statusLabel}</dd>
-        <dt className="text-muted-foreground">Variabilní symbol</dt>
-        <dd className="font-mono">{invoice.variableSymbol}</dd>
-        <dt className="text-muted-foreground">Splatnost</dt>
-        <dd>{formatPragueDate(invoice.dueDate)}</dd>
-      </dl>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <InvoiceHeaderCard
+            csrf={csrf}
+            invoiceId={invoice.id}
+            dueDate={invoice.dueDate}
+            customer={invoice.customer}
+            customers={customers}
+            editable={editable}
+          />
+        </div>
+        <div className="space-y-6 lg:col-span-2">
+          <ItemsCard
+            csrf={csrf}
+            invoiceId={invoice.id}
+            items={invoice.items}
+            totalCents={invoice.totalCents}
+            editable={editable}
+          />
 
-      <section className="space-y-2 rounded-lg border border-border p-4 text-sm">
-        <h2 className="font-medium">Odběratel</h2>
-        <p>{invoice.customer.name}</p>
-        {invoice.customer.address && <p>{invoice.customer.address}</p>}
-        {(invoice.customer.ico || invoice.customer.dic) && (
-          <p className="text-muted-foreground">
-            {invoice.customer.ico ? `IČO ${invoice.customer.ico}` : ""}
-            {invoice.customer.dic ? ` · DIČ ${invoice.customer.dic}` : ""}
-          </p>
-        )}
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium text-muted-foreground">Položky</h2>
-        <ul className="divide-y divide-border rounded-lg border border-border">
-          {invoice.items.map((item, idx) => (
-            <li key={idx} className="flex justify-between gap-3 px-4 py-3 text-sm">
-              <div>
-                <p className="font-medium">
-                  {item.name}{" "}
-                  <span className="font-normal text-muted-foreground">
-                    × {item.quantity}
-                  </span>
+          <Card className="bg-background">
+            <CardHeader>
+              <CardTitle>
+                Platby ({formatCzk(paidTotal)} z {formatCzk(invoice.totalCents)})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {invoice.payments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Zatím nebyla spárována žádná platba.
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {isPriceCategory(item.category)
-                    ? PRICE_CATEGORY_LABELS[item.category]
-                    : item.category}
-                </p>
-              </div>
-              <p className="tabular-nums">{formatCzk(item.lineTotalCents)}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <p className="text-right text-2xl font-bold tabular-nums text-primary">
-        {formatCzk(invoice.totalCents)}
-      </p>
-
-      <a
-        href={`/api/invoices/${invoice.id}/pdf`}
-        className="inline-flex w-full justify-center rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground sm:w-auto"
-      >
-        Stáhnout PDF
-      </a>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {invoice.payments.map((p) => (
+                    <li key={p.id} className="flex justify-between gap-3 py-2 text-sm">
+                      <span className="text-muted-foreground">
+                        {p.bookedAt ? formatPragueDate(p.bookedAt) : "—"}
+                        {p.message ? ` · ${p.message}` : ""}
+                      </span>
+                      <span className="font-medium tabular-nums">
+                        {formatCzk(p.amountCents)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

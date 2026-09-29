@@ -67,7 +67,7 @@ export async function createPriceItemAction(
     },
   });
 
-  revalidatePath("/settings/pricelist");
+  revalidatePath("/settings");
   return { success: true };
 }
 
@@ -121,7 +121,7 @@ export async function updatePriceItemAction(
     },
   });
 
-  revalidatePath("/settings/pricelist");
+  revalidatePath("/settings");
   return { success: true };
 }
 
@@ -151,6 +151,6 @@ export async function setPriceItemActiveAction(
     data: { active },
   });
 
-  revalidatePath("/settings/pricelist");
+  revalidatePath("/settings");
   return { success: true };
 }

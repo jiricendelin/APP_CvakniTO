@@ -19,6 +19,7 @@ export async function getInvoiceForTenant(tenantId: string, id: string) {
     include: {
       customer: true,
       items: { orderBy: { name: "asc" } },
+      payments: { orderBy: { createdAt: "desc" } },
     },
   });
 }

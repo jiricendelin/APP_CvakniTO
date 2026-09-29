@@ -169,6 +169,8 @@ model Invoice {
   totalCents     Int      @map("total_cents")
   issuedAt       DateTime @default(now()) @map("issued_at")
   dueDate        DateTime @map("due_date") @db.Date
+  sentAt         DateTime? @map("sent_at")
+  paidAt         DateTime? @map("paid_at")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

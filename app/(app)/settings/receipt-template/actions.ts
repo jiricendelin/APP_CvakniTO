@@ -52,6 +52,6 @@ export async function updateReceiptTemplateAction(
     receiptTemplate: parsed.data.receiptTemplate,
   });
 
-  revalidatePath("/settings/receipt-template");
+  revalidatePath("/settings");
   return { success: true };
 }

@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   sendSmtpTestEmailAction,
   updateSmtpSettingsAction,
@@ -66,10 +65,6 @@ export function SmtpSettingsForm({
 
   return (
     <div className="mx-auto w-full max-w-lg space-y-6">
-      <Link href="/settings" className="text-sm text-primary hover:underline">
-        ← Nastavení
-      </Link>
-
       <form action={saveAction} className="space-y-4">
         <CsrfField token={csrf} />
         <label className="block space-y-1 text-sm">

@@ -36,15 +36,33 @@ export function parseTenantSettings(raw: unknown): TenantSettings {
   return tenantSettingsSchema.parse({});
 }
 
-export const settingsFormSchema = z
+export const companySettingsFormSchema = z.object({
+  companyName: z.string().max(200),
+  companyIco: z.string().max(20),
+  companyDic: z.string().max(20),
+  companyAddress: z.string().max(500),
+  primaryColor: hexColor,
+});
+
+export function formToCompanySettings(
+  data: z.infer<typeof companySettingsFormSchema>
+): Pick<
+  TenantSettings,
+  "companyName" | "companyIco" | "companyDic" | "companyAddress" | "primaryColor"
+> {
+  return {
+    companyName: data.companyName.trim(),
+    companyIco: data.companyIco.trim(),
+    companyDic: data.companyDic.trim(),
+    companyAddress: data.companyAddress.trim(),
+    primaryColor: data.primaryColor.toLowerCase(),
+  };
+}
+
+export const paymentSettingsFormSchema = z
   .object({
-    companyName: z.string().max(200),
-    companyIco: z.string().max(20),
-    companyDic: z.string().max(20),
-    companyAddress: z.string().max(500),
     bankAccount: z.string().max(40),
     iban: z.string().max(40),
-    primaryColor: hexColor,
   })
   .superRefine((data, ctx) => {
     const iban = normalizeIban(data.iban);
@@ -57,26 +75,12 @@ export const settingsFormSchema = z
     }
   });
 
-export function formToSettings(
-  data: z.infer<typeof settingsFormSchema>
-): Pick<
-  TenantSettings,
-  | "companyName"
-  | "companyIco"
-  | "companyDic"
-  | "companyAddress"
-  | "bankAccount"
-  | "iban"
-  | "primaryColor"
-> {
+export function formToPaymentSettings(
+  data: z.infer<typeof paymentSettingsFormSchema>
+): Pick<TenantSettings, "bankAccount" | "iban"> {
   return {
-    companyName: data.companyName.trim(),
-    companyIco: data.companyIco.trim(),
-    companyDic: data.companyDic.trim(),
-    companyAddress: data.companyAddress.trim(),
     bankAccount: data.bankAccount.trim(),
     iban: normalizeIban(data.iban),
-    primaryColor: data.primaryColor.toLowerCase(),
   };
 }
 

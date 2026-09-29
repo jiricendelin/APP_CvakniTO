@@ -57,7 +57,7 @@ export async function updateEetConfigAction(
     eetAutoSend: parsed.data.eetAutoSend,
   });
 
-  revalidatePath("/settings/eet");
+  revalidatePath("/settings");
   return { success: true };
 }
 
@@ -106,7 +106,7 @@ export async function uploadEetCertAction(
     eetTaxpayerId: info.info.taxpayerId || current.eetTaxpayerId,
   });
 
-  revalidatePath("/settings/eet");
+  revalidatePath("/settings");
   return { success: true, certUploaded: true };
 }
 
@@ -134,6 +134,6 @@ export async function removeEetCertAction(
     eetCertUploadedAt: "",
   });
 
-  revalidatePath("/settings/eet");
+  revalidatePath("/settings");
   return { success: true };
 }

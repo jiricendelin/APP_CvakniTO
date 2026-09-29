@@ -4,7 +4,7 @@ import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
-  updateGeneralSettingsAction,
+  updateCompanySettingsAction,
   type SettingsFormState,
 } from "@/app/(app)/settings/actions";
 import { CsrfField } from "@/components/csrf-field";
@@ -27,7 +27,7 @@ function SubmitButton() {
 const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 
-export function GeneralSettingsForm({
+export function CompanySettingsForm({
   csrf,
   settings,
 }: {
@@ -35,10 +35,10 @@ export function GeneralSettingsForm({
   settings: TenantSettings;
 }) {
   const router = useRouter();
-  const [state, formAction] = useActionState<
-    SettingsFormState,
-    FormData
-  >(updateGeneralSettingsAction, {});
+  const [state, formAction] = useActionState<SettingsFormState, FormData>(
+    updateCompanySettingsAction,
+    {}
+  );
 
   useEffect(() => {
     if (state.success) router.refresh();
@@ -98,35 +98,6 @@ export function GeneralSettingsForm({
             rows={3}
             className={fieldClass}
             defaultValue={settings.companyAddress}
-          />
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Platba</h2>
-        <div className="space-y-2">
-          <label htmlFor="bankAccount" className="text-sm font-medium">
-            Číslo účtu
-          </label>
-          <input
-            id="bankAccount"
-            name="bankAccount"
-            className={fieldClass}
-            placeholder="123456789/0100"
-            defaultValue={settings.bankAccount}
-          />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="iban" className="text-sm font-medium">
-            IBAN
-          </label>
-          <input
-            id="iban"
-            name="iban"
-            className={fieldClass}
-            placeholder="CZ6508000000192000145399"
-            defaultValue={settings.iban}
-            autoCapitalize="characters"
           />
         </div>
       </section>

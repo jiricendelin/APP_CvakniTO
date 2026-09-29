@@ -20,6 +20,12 @@ export async function GET(
     if (!invoice) {
       return NextResponse.json({ error: "Faktura nenalezena." }, { status: 404 });
     }
+    if (invoice.status === "koncept") {
+      return NextResponse.json(
+        { error: "Fakturu nejdřív vystavte." },
+        { status: 400 }
+      );
+    }
 
     const pdf = await renderInvoicePdfBuffer(invoice, settings);
     const safeName = invoice.number.replace(/[^\w.-]+/g, "_");

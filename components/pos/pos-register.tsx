@@ -48,6 +48,12 @@ function parseQuantity(raw: string): number {
   return Math.min(n, 999);
 }
 
+function haptic() {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(30);
+  }
+}
+
 export function PosRegister({
   items,
   csrf,
@@ -57,20 +63,27 @@ export function PosRegister({
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [printOnIssue, setPrintOnIssue] = useState(false);
-  const [qtyInput, setQtyInput] = useState("1");
+  const [qtyInput, setQtyInput] = useState("");
   const [keypadTarget, setKeypadTarget] = useState<KeypadTarget>("quantity");
   const [customOpen, setCustomOpen] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState("");
   const [customCategory, setCustomCategory] = useState<PriceCategory>("ostatni");
   const [customError, setCustomError] = useState<string | null>(null);
+  const [flashKey, setFlashKey] = useState<string | null>(null);
 
   const totalCents = useMemo(() => cartTotal(cart), [cart]);
-  const pendingQty = parseQuantity(qtyInput);
+  const pendingQty = qtyInput === "" ? 1 : parseQuantity(qtyInput);
 
   useEffect(() => {
     setPrintOnIssue(loadPrintOnIssuePreference());
   }, []);
+
+  useEffect(() => {
+    if (!flashKey) return;
+    const t = setTimeout(() => setFlashKey(null), 350);
+    return () => clearTimeout(t);
+  }, [flashKey]);
 
   const clearCart = useCallback(() => setCart([]), []);
 
@@ -87,6 +100,8 @@ export function PosRegister({
 
   const addCatalog = (product: CatalogProduct) => {
     const qty = pendingQty;
+    haptic();
+    setFlashKey(product.id);
     setCart((prev) => {
       const idx = prev.findIndex(
         (l) => l.kind === "catalog" && l.priceItemId === product.id
@@ -112,7 +127,7 @@ export function PosRegister({
         },
       ];
     });
-    setQtyInput("1");
+    setQtyInput("");
   };
 
   const addCustom = () => {
@@ -128,6 +143,8 @@ export function PosRegister({
       return;
     }
     const qty = pendingQty;
+    haptic();
+    setFlashKey("custom");
     setCart((prev) => [
       ...prev,
       {
@@ -141,7 +158,7 @@ export function PosRegister({
     ]);
     setCustomName("");
     setCustomPrice("");
-    setQtyInput("1");
+    setQtyInput("");
     setKeypadTarget("quantity");
   };
 
@@ -158,9 +175,6 @@ export function PosRegister({
   const removeLine = (key: string) => {
     setCart((prev) => prev.filter((l) => l.key !== key));
   };
-
-  const productBtnClass =
-    "flex min-h-[4.5rem] flex-col items-center justify-center rounded-xl border border-border bg-card px-2 py-3 text-center active:bg-accent touch-manipulation";
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-4 pb-4">
@@ -237,31 +251,38 @@ export function PosRegister({
         onCheckoutSuccess={clearCart}
       />
 
-      <section className="space-y-2 rounded-lg border border-border p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-medium">Počet k přidání</h2>
-          <span className="text-2xl font-bold tabular-nums">{pendingQty}</span>
-        </div>
-        <div className="flex gap-2 text-xs">
-          <button
-            type="button"
-            className={`rounded-md px-3 py-1.5 ${
-              keypadTarget === "quantity"
-                ? "bg-primary text-primary-foreground"
-                : "border border-border"
-            }`}
-            onClick={() => setKeypadTarget("quantity")}
-          >
-            Počet
-          </button>
-        </div>
-        <NumericKeypad
-          onKey={handleKeypad}
-          allowDecimal={keypadTarget === "customPrice"}
-        />
+      <section className="space-y-2">
+        <h2 className="text-sm font-medium text-muted-foreground">Ceník</h2>
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Žádné aktivní položky — doplň ceník v nastavení.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`flex min-h-[4.5rem] flex-col items-center justify-center rounded-xl border border-border px-2 py-3 text-center touch-manipulation transition-colors duration-300 ${
+                  flashKey === item.id
+                    ? "bg-green-700 text-white"
+                    : "bg-card active:bg-accent"
+                }`}
+                onClick={() => addCatalog(item)}
+              >
+                <span className="line-clamp-2 text-sm font-semibold leading-tight">
+                  {item.name}
+                </span>
+                <span className="mt-1 text-xs tabular-nums text-muted-foreground">
+                  {formatCzk(item.priceCents)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
-      <section className="rounded-lg border border-dashed border-border">
+      <section className="space-y-2 rounded-lg border border-border bg-muted">
         <button
           type="button"
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"
@@ -320,7 +341,11 @@ export function PosRegister({
             )}
             <button
               type="button"
-              className="w-full rounded-lg bg-primary py-3 text-sm font-medium text-primary-foreground active:opacity-90"
+              className={`w-full rounded-lg py-3 text-sm font-medium transition-colors duration-300 active:opacity-90 ${
+                flashKey === "custom"
+                  ? "bg-green-700 text-white"
+                  : "bg-primary text-primary-foreground"
+              }`}
               onClick={addCustom}
             >
               Přidat do košíku
@@ -329,31 +354,28 @@ export function PosRegister({
         )}
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium text-muted-foreground">Ceník</h2>
-        {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Žádné aktivní položky — doplň ceník v nastavení.
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={productBtnClass}
-                onClick={() => addCatalog(item)}
-              >
-                <span className="line-clamp-2 text-sm font-semibold leading-tight">
-                  {item.name}
-                </span>
-                <span className="mt-1 text-xs tabular-nums text-muted-foreground">
-                  {formatCzk(item.priceCents)}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+      <section className="space-y-2 rounded-lg border border-border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-medium">Počet k přidání</h2>
+          <span className="text-2xl font-bold tabular-nums">{pendingQty}</span>
+        </div>
+        <div className="flex gap-2 text-xs">
+          <button
+            type="button"
+            className={`rounded-md px-3 py-1.5 ${
+              keypadTarget === "quantity"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border"
+            }`}
+            onClick={() => setKeypadTarget("quantity")}
+          >
+            Počet
+          </button>
+        </div>
+        <NumericKeypad
+          onKey={handleKeypad}
+          allowDecimal={keypadTarget === "customPrice"}
+        />
       </section>
     </div>
   );

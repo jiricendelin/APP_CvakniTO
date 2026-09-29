@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2, Circle } from "lucide-react";
 import { formatCzk } from "@/lib/money";
 import {
   PRICE_CATEGORIES,
@@ -18,6 +19,7 @@ export type ReceiptListRow = {
   paymentType: string;
   totalCents: number;
   eetStatus: string;
+  paidAt: Date | null;
   createdAt: Date;
 };
 
@@ -120,7 +122,20 @@ export function ReceiptsList({
                 className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent/50"
               >
                 <div className="min-w-0">
-                  <p className="font-medium">{r.number}</p>
+                  <p className="flex items-center gap-1.5 font-medium">
+                    {r.paidAt ? (
+                      <CheckCircle2
+                        className="h-4 w-4 shrink-0 text-green-700"
+                        aria-label="Uhrazeno"
+                      />
+                    ) : (
+                      <Circle
+                        className="h-4 w-4 shrink-0 text-muted-foreground"
+                        aria-label="Neuhrazeno"
+                      />
+                    )}
+                    {r.number}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {formatPragueDateTime(r.createdAt)}
                     {" · "}
