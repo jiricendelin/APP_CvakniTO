@@ -15,7 +15,8 @@
     "test:sequences": "tsx scripts/test-sequences-parallel.ts",
     "test:spayd": "tsx scripts/test-spayd.ts",
     "test:receipt-template": "tsx scripts/test-receipt-template.ts",
-    "test:tenant-isolation": "tsx scripts/test-tenant-isolation.ts"
+    "test:tenant-isolation": "tsx scripts/test-tenant-isolation.ts",
+    "test:tenant-isolation-http": "tsx scripts/test-tenant-isolation-http.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
