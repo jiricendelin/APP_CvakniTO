@@ -11,7 +11,6 @@ import {
 } from "@/app/(app)/invoices/actions";
 import { Button } from "@/components/ui/button";
 import { CSRF_FIELD } from "@/lib/auth/csrf-shared";
-import { isKonceptNumber } from "@/lib/invoices/status";
 
 function ConfirmForm({
   action,
@@ -43,10 +42,12 @@ function ConfirmForm({
 export function InvoiceActions({
   csrf,
   invoice,
+  canDelete,
   sendSlot,
 }: {
   csrf: string;
   invoice: { id: string; number: string; status: string; sentAt: Date | null; paidAt: Date | null };
+  canDelete: boolean;
   sendSlot?: React.ReactNode;
 }) {
   const isDraft = invoice.status === "koncept";
@@ -55,10 +56,11 @@ export function InvoiceActions({
   const isPaid = invoice.status === "zaplacena";
   const canRevertToDraft = isIssued && !invoice.sentAt && !invoice.paidAt;
   const canDuplicate = !isDraft;
-  const canDeleteDraft = isDraft && isKonceptNumber(invoice.number);
+  const canDeleteDraft = isDraft && canDelete;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
       {isDraft && (
         <>
           <ConfirmForm
@@ -157,6 +159,12 @@ export function InvoiceActions({
 
       {isCancelled && (
         <p className="text-sm text-muted-foreground">Faktura je zrušena.</p>
+      )}
+      </div>
+      {isDraft && !canDeleteDraft && (
+        <p className="text-sm text-muted-foreground">
+          Nelze smazat: koncept už držel číslo, které není poslední v řadě.
+        </p>
       )}
     </div>
   );

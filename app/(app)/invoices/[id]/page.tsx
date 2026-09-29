@@ -3,6 +3,8 @@ import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getInvoiceForTenant } from "@/lib/invoices/repository";
 import { listCustomersForTenant } from "@/lib/customers/repository";
+import { isKonceptNumber } from "@/lib/invoices/status";
+import { isLastAllocatedNumber } from "@/lib/sequences/repository";
 import { InvoiceDetail } from "@/components/invoices/invoice-detail";
 import { InvoiceEmailActions } from "@/components/invoices/invoice-email-actions";
 
@@ -22,10 +24,15 @@ export default async function InvoiceDetailPage({
   ]);
   if (!invoice) notFound();
 
+  const canDeleteDraft =
+    isKonceptNumber(invoice.number) ||
+    (await isLastAllocatedNumber(tenantId, "invoice", invoice.number));
+
   return (
     <InvoiceDetail
       csrf={csrf}
       customers={customers.map((c) => ({ id: c.id, name: c.name }))}
+      canDeleteDraft={canDeleteDraft}
       sendSlot={<InvoiceEmailActions csrf={csrf} invoiceId={invoice.id} />}
       invoice={{
         id: invoice.id,

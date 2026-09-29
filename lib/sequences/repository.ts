@@ -120,6 +120,20 @@ export async function allocateSequenceNumberInTransaction(
   return formatted;
 }
 
+/** Je `number` poslední přidělené číslo v řadě? Jen pak lze fakturu bezpečně smazat bez mezery. */
+export async function isLastAllocatedNumber(
+  tenantId: string,
+  kind: SequenceKind,
+  number: string
+): Promise<boolean> {
+  const seq = await prisma.sequence.findUnique({
+    where: { tenantId_kind: { tenantId, kind } },
+  });
+  if (!seq || seq.year === null || seq.nextValue <= 1) return false;
+  const expected = formatSequenceNumber(seq.prefix, seq.format, seq.nextValue - 1, seq.year);
+  return expected === number;
+}
+
 /** Atomické přidělení dalšího čísla (FOR UPDATE). */
 export async function allocateSequenceNumber(
   tenantId: string,

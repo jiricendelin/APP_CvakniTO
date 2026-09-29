@@ -14,6 +14,7 @@ import { pragueStartOfDayUtc } from "@/lib/time/prague";
 import {
   allocateSequenceNumberInTransaction,
   ensureSequencesForTenant,
+  isLastAllocatedNumber,
 } from "@/lib/sequences/repository";
 import { receiptNumberToVariableSymbol } from "@/lib/receipts/variable-symbol";
 import { isKonceptNumber } from "@/lib/invoices/status";
@@ -416,7 +417,7 @@ export async function cancelInvoiceAction(formData: FormData): Promise<void> {
   revalidatePath(`/invoices/${id}`);
 }
 
-/** Smazání konceptu — jen pokud ještě nikdy nedostal reálné číslo z řady. */
+/** Smazání konceptu — bez rizika mezery v číselné řadě. */
 export async function deleteDraftAction(formData: FormData): Promise<void> {
   await assertCsrf(formData);
 
@@ -426,9 +427,27 @@ export async function deleteDraftAction(formData: FormData): Promise<void> {
   const tenantId = await getTenantId();
   const invoice = await findOwnedInvoice(tenantId, id);
   if (!invoice || invoice.status !== "koncept") return;
-  if (!isKonceptNumber(invoice.number)) return;
 
-  await prisma.invoice.delete({ where: { id } });
+  if (isKonceptNumber(invoice.number)) {
+    await prisma.invoice.delete({ where: { id } });
+  } else {
+    // Koncept už dřív dostal reálné číslo (starší flow / vrácený z vystavené) —
+    // smazat lze jen poslední přidělené číslo v řadě, aby nevznikla mezera.
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        SELECT id FROM sequences
+        WHERE tenant_id = ${tenantId}::uuid AND kind = 'invoice'
+        FOR UPDATE
+      `;
+      const stillLast = await isLastAllocatedNumber(tenantId, "invoice", invoice.number);
+      if (!stillLast) return;
+      await tx.sequence.update({
+        where: { tenantId_kind: { tenantId, kind: "invoice" } },
+        data: { nextValue: { decrement: 1 } },
+      });
+      await tx.invoice.delete({ where: { id } });
+    });
+  }
 
   revalidatePath("/invoices");
   redirect("/invoices");

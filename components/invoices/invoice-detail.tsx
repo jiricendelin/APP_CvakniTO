@@ -52,11 +52,13 @@ export function InvoiceDetail({
   invoice,
   csrf,
   customers,
+  canDeleteDraft,
   sendSlot,
 }: {
   invoice: InvoiceDetailData;
   csrf: string;
   customers: { id: string; name: string }[];
+  canDeleteDraft: boolean;
   sendSlot?: React.ReactNode;
 }) {
   const status = resolveInvoiceStatus(invoice.status, invoice.dueDate);
@@ -77,7 +79,12 @@ export function InvoiceDetail({
       <PageHeader
         title={`Faktura ${invoice.number}`}
         actions={
-          <InvoiceActions csrf={csrf} invoice={invoice} sendSlot={sendSlot} />
+          <InvoiceActions
+            csrf={csrf}
+            invoice={invoice}
+            canDelete={canDeleteDraft}
+            sendSlot={sendSlot}
+          />
         }
       />
 
