@@ -41,13 +41,13 @@ async function buildCheckoutReceiptState(
 
   if (paymentType === "qr") {
     state.qrSpayd = buildSpaydForReceipt({
+      bankAccount: settings.bankAccount,
       iban: settings.iban,
       totalCents: receipt.totalCents,
       variableSymbol: receipt.variableSymbol,
       receiptNumber: receipt.number,
-      companyName: settings.companyName,
     });
-    state.qrMissingIban = !settings.iban?.trim();
+    state.qrMissingIban = !state.qrSpayd;
     state.qrVariableSymbol = receipt.variableSymbol;
     state.qrTotalCents = receipt.totalCents;
   }

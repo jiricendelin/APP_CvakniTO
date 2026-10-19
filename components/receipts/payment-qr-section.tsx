@@ -21,7 +21,7 @@ export function PaymentQrSection({
         </p>
         <p className="text-muted-foreground">
           {missingIban
-            ? "V nastavení chybí platný IBAN. Doplňte ho, aby šel vygenerovat platební QR kód."
+            ? "V nastavení chybí platné číslo účtu (tvar číslo/kód banky) nebo CZ IBAN."
             : "Platební QR se nepodařilo sestavit."}
         </p>
         <Link href="/settings" className="text-primary hover:underline">

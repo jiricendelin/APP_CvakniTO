@@ -46,11 +46,11 @@ export function buildReceiptTemplateContext(
   const qrSpayd =
     receipt.paymentType === "qr"
       ? buildSpaydForReceipt({
+          bankAccount: settings.bankAccount,
           iban: settings.iban,
           totalCents: receipt.totalCents,
           variableSymbol: receipt.variableSymbol,
           receiptNumber: receipt.number,
-          companyName: settings.companyName,
         })
       : null;
 

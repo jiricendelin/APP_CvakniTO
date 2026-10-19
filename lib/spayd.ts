@@ -1,15 +1,17 @@
-import { isValidIban, normalizeIban } from "@/lib/iban";
+import { resolveIbanForSpayd } from "@/lib/czech-account";
 
 export type SpaydPaymentInput = {
-  iban: string;
+  /** Preferované: číslo účtu `[předčíslí-]číslo/kód` — z něj se spočítá IBAN. */
+  bankAccount?: string;
+  /** Fallback, pokud bankAccount chybí nebo není platné. */
+  iban?: string;
   amountCents: number;
   variableSymbol: string;
   message?: string;
-  recipientName?: string;
 };
 
 const MSG_MAX = 60;
-const RN_MAX = 35;
+const VS_MAX = 10;
 
 /** Percent-encoding pro hodnoty dle SPAYD (hvězdička a procento). */
 function escapeSpaydValue(value: string): string {
@@ -47,11 +49,12 @@ export function formatSpaydAmount(amountCents: number): string {
   return am;
 }
 
+/** Stejný tvar jako cendelin.cz — bez RN (jméno příjemce). */
 export function buildSpaydPayment(input: SpaydPaymentInput): string | null {
-  const iban = normalizeIban(input.iban);
-  if (!iban || !isValidIban(iban)) return null;
+  const iban = resolveIbanForSpayd(input.bankAccount, input.iban);
+  if (!iban) return null;
 
-  const vs = String(input.variableSymbol).replace(/\D/g, "");
+  const vs = String(input.variableSymbol).replace(/\D/g, "").slice(0, VS_MAX);
   if (!vs) return null;
 
   const am = formatSpaydAmount(input.amountCents);
@@ -70,26 +73,21 @@ export function buildSpaydPayment(input: SpaydPaymentInput): string | null {
   );
   if (msg) parts.push(`MSG:${escapeSpaydValue(msg)}`);
 
-  const rn = input.recipientName
-    ? spaydAsciiMessage(input.recipientName, RN_MAX).toUpperCase()
-    : "";
-  if (rn) parts.push(`RN:${escapeSpaydValue(rn)}`);
-
   return parts.join("*");
 }
 
 export function buildSpaydForReceipt(params: {
-  iban: string;
+  bankAccount?: string;
+  iban?: string;
   totalCents: number;
   variableSymbol: string;
   receiptNumber: string;
-  companyName?: string;
 }): string | null {
   return buildSpaydPayment({
+    bankAccount: params.bankAccount,
     iban: params.iban,
     amountCents: params.totalCents,
     variableSymbol: params.variableSymbol,
     message: `Uctenka ${params.receiptNumber.trim()}`,
-    recipientName: params.companyName,
   });
 }

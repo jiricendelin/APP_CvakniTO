@@ -19,11 +19,11 @@ export function buildSampleReceiptContext(
   const totalCents = 150_000;
 
   const qrSpayd = buildSpaydForReceipt({
+    bankAccount: settings.bankAccount || "2802120038/2010",
     iban: settings.iban,
     totalCents,
     variableSymbol,
     receiptNumber: number,
-    companyName: settings.companyName,
   });
 
   return {

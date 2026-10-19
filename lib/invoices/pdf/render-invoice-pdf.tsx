@@ -17,11 +17,11 @@ export async function renderInvoicePdfBuffer(
   registerInvoicePdfFonts();
 
   const spayd = buildSpaydForReceipt({
+    bankAccount: settings.bankAccount,
     iban: settings.iban,
     totalCents: invoice.totalCents,
     variableSymbol: invoice.variableSymbol,
     receiptNumber: invoice.number,
-    companyName: settings.companyName,
   });
 
   let qrDataUrl: string | null = null;

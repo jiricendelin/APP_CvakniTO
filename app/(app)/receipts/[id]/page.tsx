@@ -26,11 +26,11 @@ export default async function ReceiptDetailPage({
   const qrSpayd =
     receipt.paymentType === "qr"
       ? buildSpaydForReceipt({
+          bankAccount: settings.bankAccount,
           iban: settings.iban,
           totalCents: receipt.totalCents,
           variableSymbol: receipt.variableSymbol,
           receiptNumber: receipt.number,
-          companyName: settings.companyName,
         })
       : null;
 
@@ -43,7 +43,7 @@ export default async function ReceiptDetailPage({
       csrf={csrf}
       qrSpayd={qrSpayd}
       qrMissingIban={
-        receipt.paymentType === "qr" ? !settings.iban?.trim() : undefined
+        receipt.paymentType === "qr" ? !qrSpayd : undefined
       }
       receipt={{
         id: receipt.id,

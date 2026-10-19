@@ -57,9 +57,13 @@ export function PaymentSettingsForm({
             id="bankAccount"
             name="bankAccount"
             className={fieldClass}
-            placeholder="123456789/0100"
+            placeholder="2802120038/2010"
             defaultValue={settings.bankAccount}
           />
+          <p className="text-xs text-muted-foreground">
+            Tvar číslo/kód banky (případně předčíslí-číslo/kód). Z něj se
+            počítá platební QR — stačí mít správně toto pole.
+          </p>
         </div>
         <div className="space-y-2">
           <label htmlFor="iban" className="text-sm font-medium">
@@ -73,6 +77,9 @@ export function PaymentSettingsForm({
             defaultValue={settings.iban}
             autoCapitalize="characters"
           />
+          <p className="text-xs text-muted-foreground">
+            Záloha, když číslo účtu chybí. Pro QR musí být český (CZ…).
+          </p>
         </div>
       </section>
 
