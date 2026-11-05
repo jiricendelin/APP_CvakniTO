@@ -11,8 +11,13 @@ import { ReceiptDeleteButton } from "./receipt-delete-button";
 import { PaymentQrSection } from "./payment-qr-section";
 import { ReceiptPrintButton } from "./receipt-print-button";
 import { ReceiptEetButtons } from "./receipt-eet-buttons";
+import { ReceiptEmailForm } from "./receipt-email-form";
 import { eetStatusLabel } from "@/lib/receipts/eet-status";
 import type { ReceiptPrintPayload } from "@/lib/receipt-template/render-print";
+import {
+  RECEIPT_KIND_LABELS,
+  isReceiptKind,
+} from "@/lib/receipts/kind";
 
 export type ReceiptDetailData = {
   id: string;
@@ -25,6 +30,8 @@ export type ReceiptDetailData = {
   printOnIssue: boolean;
   paidAt: Date | null;
   createdAt: Date;
+  kind: string;
+  remindersEnabled: boolean;
   items: {
     id: string;
     name: string;
@@ -76,6 +83,13 @@ export function ReceiptDetail({
       <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
         <dt className="text-muted-foreground">Variabilní symbol</dt>
         <dd className="font-mono font-medium">{receipt.variableSymbol}</dd>
+        <dt className="text-muted-foreground">Typ</dt>
+        <dd>
+          {isReceiptKind(receipt.kind)
+            ? RECEIPT_KIND_LABELS[receipt.kind]
+            : receipt.kind}
+          {!receipt.remindersEnabled ? " · bez upomínek" : ""}
+        </dd>
         <dt className="text-muted-foreground">Platba</dt>
         <dd>{paymentLabel}</dd>
         <dt className="text-muted-foreground">Uhrazeno</dt>
@@ -132,6 +146,8 @@ export function ReceiptDetail({
       )}
 
       <ReceiptPrintButton printPayload={printPayload ?? null} />
+
+      <ReceiptEmailForm csrf={csrf} receiptId={receipt.id} />
 
       <ReceiptEetButtons
         csrf={csrf}

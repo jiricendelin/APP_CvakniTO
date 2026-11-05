@@ -98,7 +98,10 @@ export async function checkoutAction(
       cart: parsed.data.cart,
     });
 
-    await tryAutoSendReceiptToEet(tenantId, receiptId);
+    // Hotovost → EET ihned. QR → EET až po spárované platbě (bank ingest).
+    if (parsed.data.paymentType === "hotove") {
+      await tryAutoSendReceiptToEet(tenantId, receiptId);
+    }
 
     return buildCheckoutReceiptState(
       tenantId,

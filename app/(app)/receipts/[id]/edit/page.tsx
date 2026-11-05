@@ -16,7 +16,13 @@ export default async function ReceiptEditPage({
   const [tenantId, csrf] = await Promise.all([getTenantId(), getCsrfToken()]);
   const receipt = await getReceiptForTenant(tenantId, id);
   if (!receipt) notFound();
-  if (!canModifyReceipt(receipt.eetStatus)) {
+  if (
+    !canModifyReceipt({
+      eetStatus: receipt.eetStatus,
+      paidAt: receipt.paidAt,
+      kind: receipt.kind,
+    })
+  ) {
     redirect(`/receipts/${id}`);
   }
 

@@ -26,6 +26,9 @@ export async function listReceiptsForTenant(
       eetStatus: true,
       paidAt: true,
       createdAt: true,
+      kind: true,
+      remindersEnabled: true,
+      reminderSentAt: true,
     },
     take: 200,
   });

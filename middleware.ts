@@ -31,6 +31,9 @@ function isPublicApi(pathname: string): boolean {
   if (pathname.startsWith("/api/bank")) {
     return true;
   }
+  if (pathname.startsWith("/api/cron")) {
+    return true;
+  }
   return false;
 }
 

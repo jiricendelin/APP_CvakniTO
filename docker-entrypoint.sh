@@ -15,6 +15,10 @@ EET_DIR="${EET_DATA_DIR:-/data/eet}"
 mkdir -p "$EET_DIR" 2>/dev/null || true
 echo "CvakniTO: EET cert dir $EET_DIR"
 
+VOUCHER_DIR="${VOUCHER_ART_DIR:-/data/vouchers}"
+mkdir -p "$VOUCHER_DIR" 2>/dev/null || true
+echo "CvakniTO: voucher art dir $VOUCHER_DIR"
+
 echo "CvakniTO: generating Prisma client..."
 npx prisma generate >/dev/null 2>&1 || echo "CvakniTO: prisma generate failed (continuing)."
 

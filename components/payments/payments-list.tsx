@@ -1,4 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
+import {
+  assignPaymentAction,
+  type AssignPaymentState,
+} from "@/app/(app)/payments/actions";
+import { CsrfField } from "@/components/csrf-field";
 import { formatCzk } from "@/lib/money";
 import { formatPragueDateTime } from "@/lib/time/format-prague";
 
@@ -12,11 +22,72 @@ export type PaymentRow = {
   createdAt: Date;
   receiptId: string | null;
   receiptNumber: string | null;
+  receiptUnpaid: boolean;
   invoiceId: string | null;
   invoiceNumber: string | null;
 };
 
-export function PaymentsList({ payments }: { payments: PaymentRow[] }) {
+function AssignSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+    >
+      {pending ? "…" : "Přiřadit"}
+    </button>
+  );
+}
+
+function AssignForm({
+  csrf,
+  paymentId,
+}: {
+  csrf: string;
+  paymentId: string;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState<
+    AssignPaymentState,
+    FormData
+  >(assignPaymentAction, {});
+
+  useEffect(() => {
+    if (state.success) router.refresh();
+  }, [state.success, router]);
+
+  return (
+    <form action={formAction} className="mt-2 flex flex-wrap items-end gap-2">
+      <CsrfField token={csrf} />
+      <input type="hidden" name="paymentId" value={paymentId} />
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
+        <span className="text-muted-foreground">VS nebo číslo účtenky</span>
+        <input
+          name="receiptRef"
+          required
+          className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+          placeholder="např. 20250042"
+        />
+      </label>
+      <AssignSubmitButton />
+      {state.error ? (
+        <p className="w-full text-xs text-destructive">{state.error}</p>
+      ) : null}
+      {state.success ? (
+        <p className="w-full text-xs text-green-700">{state.success}</p>
+      ) : null}
+    </form>
+  );
+}
+
+export function PaymentsList({
+  csrf,
+  payments,
+}: {
+  csrf: string;
+  payments: PaymentRow[];
+}) {
   return (
     <div className="mx-auto w-full max-w-lg space-y-4">
       <h1 className="text-xl font-semibold">Platby z banky</h1>
@@ -38,7 +109,11 @@ export function PaymentsList({ payments }: { payments: PaymentRow[] }) {
                     p.matched ? "text-primary" : "text-amber-800"
                   }
                 >
-                  {p.matched ? "Spárováno" : "Nespárováno"}
+                  {!p.matched
+                    ? "Nespárováno"
+                    : p.receiptUnpaid
+                      ? "Spárováno · účtenka neuhrazena celá"
+                      : "Spárováno"}
                 </span>
               </div>
               <p className="text-muted-foreground">
@@ -65,6 +140,9 @@ export function PaymentsList({ payments }: { payments: PaymentRow[] }) {
               )}
               {p.message && (
                 <p className="text-xs text-muted-foreground">{p.message}</p>
+              )}
+              {!p.matched && (
+                <AssignForm csrf={csrf} paymentId={p.id} />
               )}
             </li>
           ))}

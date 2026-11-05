@@ -8,6 +8,8 @@ import { SequencesManager, type SequenceRow } from "@/components/settings/sequen
 import { ReceiptTemplateEditor } from "@/components/settings/receipt-template-editor";
 import { SmtpSettingsForm } from "@/components/settings/smtp-settings-form";
 import { EmailTemplatesForm } from "@/components/settings/email-templates-form";
+import { MailSignatureImapForm } from "@/components/settings/mail-signature-imap-form";
+import { VoucherArtForm } from "@/components/settings/voucher-art-form";
 import { EetSettingsForm } from "@/components/settings/eet-settings-form";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
 import type { TenantSettings } from "@/lib/settings/schema";
@@ -35,6 +37,7 @@ export function SettingsTabs({
         <TabsTrigger value="cenik">Ceník</TabsTrigger>
         <TabsTrigger value="cisla">Číselné řady</TabsTrigger>
         <TabsTrigger value="uctenka">Šablona účtenky</TabsTrigger>
+        <TabsTrigger value="poukaz">Grafika poukazu</TabsTrigger>
         <TabsTrigger value="email">E-mail</TabsTrigger>
         <TabsTrigger value="eet">EET 2.0</TabsTrigger>
         <TabsTrigger value="ucet">Účet</TabsTrigger>
@@ -60,10 +63,26 @@ export function SettingsTabs({
         <ReceiptTemplateEditor csrf={csrf} settings={settings} />
       </TabsContent>
 
+      <TabsContent value="poukaz">
+        <VoucherArtForm
+          csrf={csrf}
+          settings={settings}
+          priceItems={priceItems.map((p) => ({
+            id: p.id,
+            name: p.name,
+            giftEligible: p.giftEligible,
+          }))}
+        />
+      </TabsContent>
+
       <TabsContent value="email" className="space-y-8">
         <div>
           <h2 className="mb-2 text-lg font-semibold">E-mail (SMTP)</h2>
           <SmtpSettingsForm csrf={csrf} settings={settings} />
+        </div>
+        <div>
+          <h2 className="mb-2 text-lg font-semibold">Podpis a Odeslaná pošta</h2>
+          <MailSignatureImapForm csrf={csrf} settings={settings} />
         </div>
         <div>
           <h2 className="mb-2 text-lg font-semibold">E-mailové šablony</h2>

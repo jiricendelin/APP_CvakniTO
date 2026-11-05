@@ -12,33 +12,38 @@ model Tenant {
   name      String
   createdAt DateTime @default(now()) @map("created_at")
 
-  users      User[]
-  settings   Setting?
-  sequences  Sequence[]
-  priceItems PriceItem[]
-  receipts     Receipt[]
-  receiptItems ReceiptItem[]
-  customers    Customer[]
-  invoices     Invoice[]
-  invoiceItems InvoiceItem[]
-  payments     Payment[]
-  eetRecords   EetRecord[]
+  users          User[]
+  settings       Setting?
+  sequences      Sequence[]
+  priceItems     PriceItem[]
+  receipts       Receipt[]
+  receiptItems   ReceiptItem[]
+  customers      Customer[]
+  giftCustomers  GiftCustomer[]
+  invoices       Invoice[]
+  invoiceItems   InvoiceItem[]
+  payments       Payment[]
+  eetRecords     EetRecord[]
+  vouchers       Voucher[]
+  mailLogs       MailLog[]
 
   @@map("tenants")
 }
 
 model PriceItem {
-  id         String   @id @default(uuid()) @db.Uuid
-  tenantId   String   @map("tenant_id") @db.Uuid
-  name       String
-  priceCents Int      @map("price_cents")
-  category   String
-  active     Boolean  @default(true)
-  sortOrder  Int      @default(0) @map("sort_order")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  name         String
+  priceCents   Int      @map("price_cents")
+  category     String
+  active       Boolean  @default(true)
+  giftEligible Boolean  @default(false) @map("gift_eligible")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vouchers Voucher[]
 
   @@index([tenantId])
   @@index([tenantId, active])
@@ -89,33 +94,41 @@ model Sequence {
 }
 
 model Receipt {
-  id             String   @id @default(uuid()) @db.Uuid
-  tenantId       String   @map("tenant_id") @db.Uuid
-  number         String
-  variableSymbol String   @map("variable_symbol")
-  paymentType    String   @map("payment_type")
-  totalCents     Int      @map("total_cents")
-  eetStatus      String   @default("neodeslano") @map("eet_status")
-  eetPok         String?  @map("eet_pok")
-  eetBkp         String?  @map("eet_bkp")
-  eetPkp         String?  @map("eet_pkp")
-  printOnIssue   Boolean  @default(false) @map("print_on_issue")
-  paidAt         DateTime? @map("paid_at")
-  stornedAt      DateTime? @map("storned_at")
-  correctsReceiptId String? @map("corrects_receipt_id") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at")
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  number            String
+  variableSymbol    String    @map("variable_symbol")
+  paymentType       String    @map("payment_type")
+  totalCents        Int       @map("total_cents")
+  eetStatus         String    @default("neodeslano") @map("eet_status")
+  eetPok            String?   @map("eet_pok")
+  eetBkp            String?   @map("eet_bkp")
+  eetPkp            String?   @map("eet_pkp")
+  printOnIssue      Boolean   @default(false) @map("print_on_issue")
+  paidAt            DateTime? @map("paid_at")
+  stornedAt         DateTime? @map("storned_at")
+  correctsReceiptId String?   @map("corrects_receipt_id") @db.Uuid
+  kind              String    @default("bezna")
+  giftCustomerId    String?   @map("gift_customer_id") @db.Uuid
+  remindersEnabled  Boolean   @default(true) @map("reminders_enabled")
+  reminderSentAt    DateTime? @map("reminder_sent_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
-  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  payments Payment[]
-  items  ReceiptItem[]
-  eetRecords EetRecord[]
-  correctsReceipt Receipt? @relation("ReceiptCorrection", fields: [correctsReceiptId], references: [id], onDelete: SetNull)
-  correctedBy Receipt[] @relation("ReceiptCorrection")
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+  items           ReceiptItem[]
+  eetRecords      EetRecord[]
+  correctsReceipt Receipt?      @relation("ReceiptCorrection", fields: [correctsReceiptId], references: [id], onDelete: SetNull)
+  correctedBy     Receipt[]     @relation("ReceiptCorrection")
+  giftCustomer    GiftCustomer? @relation(fields: [giftCustomerId], references: [id], onDelete: SetNull)
+  voucher         Voucher?
 
   @@unique([tenantId, number])
   @@unique([tenantId, variableSymbol])
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([tenantId, kind])
+  @@index([giftCustomerId])
   @@map("receipts")
 }
 
@@ -159,20 +172,73 @@ model Customer {
   @@map("customers")
 }
 
-model Invoice {
+model GiftCustomer {
+  id                    String   @id @default(uuid()) @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  lastName              String   @map("last_name")
+  firstName             String   @map("first_name")
+  phone                 String   @default("")
+  email                 String   @default("")
+  note                  String   @default("")
+  awaitingStornoPayment Boolean  @default(false) @map("awaiting_storno_payment")
+  stornoFeeCents        Int      @default(0) @map("storno_fee_cents")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  receipts Receipt[]
+  vouchers Voucher[]
+
+  @@index([tenantId])
+  @@index([tenantId, lastName])
+  @@map("gift_customers")
+}
+
+model Voucher {
   id             String   @id @default(uuid()) @db.Uuid
   tenantId       String   @map("tenant_id") @db.Uuid
-  customerId     String   @map("customer_id") @db.Uuid
   number         String
-  variableSymbol String   @map("variable_symbol")
-  status         String   @default("koncept")
-  totalCents     Int      @map("total_cents")
-  issuedAt       DateTime @default(now()) @map("issued_at")
-  dueDate        DateTime @map("due_date") @db.Date
-  sentAt         DateTime? @map("sent_at")
-  paidAt         DateTime? @map("paid_at")
+  validUntil     DateTime @map("valid_until") @db.Date
+  buyerName      String   @map("buyer_name")
+  recipientName  String   @map("recipient_name")
+  buyerEmail     String   @default("") @map("buyer_email")
+  priceCents     Int      @map("price_cents")
+  status         String   @default("vystaveny")
+  kind           String
+  priceItemId    String?  @map("price_item_id") @db.Uuid
+  serviceName    String   @default("") @map("service_name")
+  receiptId      String?  @unique @map("receipt_id") @db.Uuid
+  giftCustomerId String?  @map("gift_customer_id") @db.Uuid
+  note           String   @default("")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  priceItem    PriceItem?    @relation(fields: [priceItemId], references: [id], onDelete: SetNull)
+  receipt      Receipt?      @relation(fields: [receiptId], references: [id], onDelete: SetNull)
+  giftCustomer GiftCustomer? @relation(fields: [giftCustomerId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, number])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, validUntil])
+  @@map("vouchers")
+}
+
+model Invoice {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  customerId     String    @map("customer_id") @db.Uuid
+  number         String
+  variableSymbol String    @map("variable_symbol")
+  status         String    @default("koncept")
+  totalCents     Int       @map("total_cents")
+  issuedAt       DateTime  @default(now()) @map("issued_at")
+  dueDate        DateTime  @map("due_date") @db.Date
+  sentAt         DateTime? @map("sent_at")
+  paidAt         DateTime? @map("paid_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -207,17 +273,17 @@ model InvoiceItem {
 }
 
 model Payment {
-  id             String   @id @default(uuid()) @db.Uuid
-  tenantId       String   @map("tenant_id") @db.Uuid
-  moveId         String   @map("move_id")
-  variableSymbol String   @map("variable_symbol")
-  amountCents    Int      @map("amount_cents")
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  moveId         String    @map("move_id")
+  variableSymbol String    @map("variable_symbol")
+  amountCents    Int       @map("amount_cents")
   bookedAt       DateTime? @map("booked_at")
-  message        String   @default("")
-  receiptId      String?  @map("receipt_id") @db.Uuid
-  invoiceId      String?  @map("invoice_id") @db.Uuid
-  matched        Boolean  @default(false)
-  createdAt      DateTime @default(now()) @map("created_at")
+  message        String    @default("")
+  receiptId      String?   @map("receipt_id") @db.Uuid
+  invoiceId      String?   @map("invoice_id") @db.Uuid
+  matched        Boolean   @default(false)
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   receipt Receipt? @relation(fields: [receiptId], references: [id], onDelete: SetNull)
@@ -247,4 +313,21 @@ model EetRecord {
 
   @@index([tenantId, receiptId])
   @@map("eet_records")
+}
+
+model MailLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  kind      String
+  toEmail   String   @map("to_email")
+  subject   String
+  status    String
+  error     String   @default("")
+  meta      Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@map("mail_logs")
 }

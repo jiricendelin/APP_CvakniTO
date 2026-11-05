@@ -39,7 +39,11 @@ export default async function ReceiptDetailPage({
   return (
     <ReceiptDetail
       printPayload={printPayload}
-      canModify={canModifyReceipt(receipt.eetStatus)}
+      canModify={canModifyReceipt({
+        eetStatus: receipt.eetStatus,
+        paidAt: receipt.paidAt,
+        kind: receipt.kind,
+      })}
       csrf={csrf}
       qrSpayd={qrSpayd}
       qrMissingIban={
@@ -56,6 +60,8 @@ export default async function ReceiptDetailPage({
         printOnIssue: receipt.printOnIssue,
         paidAt: receipt.paidAt,
         createdAt: receipt.createdAt,
+        kind: receipt.kind,
+        remindersEnabled: receipt.remindersEnabled,
         items: receipt.items.map((item) => ({
           id: item.id,
           name: item.name,

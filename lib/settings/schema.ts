@@ -5,6 +5,7 @@ import { DEFAULT_RECEIPT_TEMPLATE } from "@/lib/receipt-template/default-templat
 import { smtpSettingsSchema } from "@/lib/settings/smtp-schema";
 import { mailTemplatesSchema } from "@/lib/mail/template-schema";
 import { eetSettingsSchema } from "@/lib/eet/settings-schema";
+import { mailExtraSettingsSchema } from "@/lib/settings/mail-extra-schema";
 
 const hexColor = z
   .string()
@@ -25,6 +26,7 @@ export const tenantSettingsSchema = z.object({
     .default(DEFAULT_RECEIPT_TEMPLATE),
   ...smtpSettingsSchema.shape,
   ...mailTemplatesSchema.shape,
+  ...mailExtraSettingsSchema.shape,
   ...eetSettingsSchema.shape,
 });
 

@@ -14,7 +14,7 @@ const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 
 const VARS =
-  "{{companyName}}, {{customerName}}, {{invoiceNumber}}, {{variableSymbol}}, {{totalCzk}}, {{dueDate}}";
+  "{{companyName}}, {{customerName}}, {{invoiceNumber}}, {{receiptNumber}}, {{voucherNumber}}, {{variableSymbol}}, {{totalCzk}}, {{dueDate}}, {{validUntil}}, {{recipientName}}, {{buyerName}}, {{serviceName}}";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -99,17 +99,45 @@ export function EmailTemplatesForm({
           settings={settings}
         />
         <TemplateBlock
-          title="Upomínka"
+          title="Upomínka faktury"
           subjectName="mailReminderSubject"
           textName="mailReminderText"
           htmlName="mailReminderHtml"
           settings={settings}
         />
         <TemplateBlock
-          title="Poděkování"
+          title="Poděkování za fakturu"
           subjectName="mailThanksSubject"
           textName="mailThanksText"
           htmlName="mailThanksHtml"
+          settings={settings}
+        />
+        <TemplateBlock
+          title="Dárkový poukaz (odeslání)"
+          subjectName="mailVoucherSubject"
+          textName="mailVoucherText"
+          htmlName="mailVoucherHtml"
+          settings={settings}
+        />
+        <TemplateBlock
+          title="Aktivace poukazu"
+          subjectName="mailVoucherActivationSubject"
+          textName="mailVoucherActivationText"
+          htmlName="mailVoucherActivationHtml"
+          settings={settings}
+        />
+        <TemplateBlock
+          title="Účtenka"
+          subjectName="mailReceiptSubject"
+          textName="mailReceiptText"
+          htmlName="mailReceiptHtml"
+          settings={settings}
+        />
+        <TemplateBlock
+          title="Upomínka účtenky / poukazu"
+          subjectName="mailReceiptReminderSubject"
+          textName="mailReceiptReminderText"
+          htmlName="mailReceiptReminderHtml"
           settings={settings}
         />
         {state.error && (

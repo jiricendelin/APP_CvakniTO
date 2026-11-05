@@ -154,3 +154,34 @@ export async function setPriceItemActiveAction(
   revalidatePath("/settings");
   return { success: true };
 }
+
+export async function setPriceItemGiftEligibleAction(
+  _prev: PricelistActionState,
+  formData: FormData
+): Promise<PricelistActionState> {
+  try {
+    await assertCsrf(formData);
+  } catch {
+    return { error: "Neplatný CSRF token. Obnovte stránku." };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  const giftEligible = formData.get("giftEligible") === "true";
+  if (!id) return { error: "Chybí ID položky." };
+
+  const tenantId = await getTenantId();
+  try {
+    await assertItemOwned(tenantId, id);
+  } catch {
+    return { error: "Položka nenalezena." };
+  }
+
+  await prisma.priceItem.update({
+    where: { id },
+    data: { giftEligible },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/vouchers");
+  return { success: true };
+}

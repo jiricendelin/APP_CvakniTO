@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { BankIngestPayload } from "./ingest-schema";
+import { afterReceiptPaid } from "./after-receipt-paid";
+import { applyInvoicePayment, applyReceiptPayment } from "./apply-payment";
 
 export type IngestResult =
   | { ok: true; duplicate: true }
@@ -37,7 +39,7 @@ export async function processBankIngest(
 
   const invoice = await prisma.invoice.findFirst({
     where: { tenantId: payload.tenantId, variableSymbol: vs },
-    select: { id: true, status: true },
+    select: { id: true },
   });
 
   const receipt =
@@ -49,23 +51,12 @@ export async function processBankIngest(
       : null;
 
   const matched = Boolean(invoice || receipt);
-  const now = new Date();
+
+  let becamePaid = false;
+  let voucherActivatedId: string | null = null;
 
   const payment = await prisma.$transaction(async (tx) => {
-    if (invoice) {
-      await tx.invoice.update({
-        where: { id: invoice.id },
-        data: { status: "zaplacena", paidAt: now },
-      });
-    }
-    if (receipt) {
-      await tx.receipt.update({
-        where: { id: receipt.id },
-        data: { paidAt: now },
-      });
-    }
-
-    return tx.payment.create({
+    const created = await tx.payment.create({
       data: {
         tenantId: payload.tenantId,
         moveId: payload.moveId,
@@ -79,7 +70,29 @@ export async function processBankIngest(
       },
       select: { id: true },
     });
+
+    if (receipt) {
+      const result = await applyReceiptPayment(
+        tx,
+        payload.tenantId,
+        receipt.id
+      );
+      becamePaid = result.becamePaid;
+      voucherActivatedId = result.voucherActivatedId;
+    } else if (invoice) {
+      await applyInvoicePayment(tx, payload.tenantId, invoice.id);
+    }
+
+    return created;
   });
+
+  if (receipt && becamePaid) {
+    await afterReceiptPaid(
+      payload.tenantId,
+      receipt.id,
+      voucherActivatedId
+    );
+  }
 
   return {
     ok: true,

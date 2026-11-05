@@ -1,6 +1,6 @@
 # CvakniTO — HANDOFF (stav MVP)
 
-**Verze aplikace:** `1.18` (`lib/version.ts`)  
+**Verze aplikace:** `1.23` (`lib/version.ts`)  
 **Repo:** `https://github.com/jiricendelin/APP_CvakniTO`  
 **Produkce:** `https://cvaknito.cendelin.cz`  
 **Zdroj řezů:** `source/rezy.md` · **Zadání:** `source/zadani.md`
@@ -22,6 +22,19 @@ MVP z `rezy.md` je v kódu **hotové** (Fáze 1–4). Zbývají **manuální kro
 | **1.16** | R20 | `POST /api/bank/ingest`, tabulka `payments`, `/payments` |
 | **1.17** | R23 + R25 (základ) | `/reports`, `GET /api/reports/export`, `npm run test:tenant-isolation` |
 | **1.18** | R21–R24 | EET: `/settings/eet`, odeslání, auto po zaplacení, storno, opravná účtenka |
+| **1.23** | Poukazy | Dárkové poukazy (`/vouchers`), zákazníci DP + storno poplatky (`/gift-customers`), e-mail účtenky, podpis + IMAP kopie, denní cron (`/api/cron/daily`). Platby: účtenka zaplacená až při součtu plateb ≥ částka, ruční přiřazení platby v `/payments` a v detailu poukazu, QR účtenky EET až po zaplacení. |
+
+### Provoz pro 1.23
+
+- `CRON_SECRET` v Coolify + n8n Schedule (1× denně) → `POST /api/cron/daily`, header `Authorization: Bearer <CRON_SECRET>`.
+- Persistent volume na `VOUCHER_ART_DIR` (default `/data/vouchers`) — grafika poukazů.
+
+### Na později (z review 1.23)
+
+- Cron autorizace jen POST + Bearer (zrušit `?token=`) — nejdřív ověřit, jak je cron nastavený v n8n.
+- Ruční přiřazení platby k **faktuře**.
+- IMAP kopie v Odeslané: chybí přílohy, předmět s diakritikou bez RFC 2047.
+- `mailLog.create` v `lib/mail/send.ts` obalit try/catch (jinak hrozí duplicitní upomínka).
 
 ---
 

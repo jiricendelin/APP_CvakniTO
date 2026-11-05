@@ -16,7 +16,15 @@ async function loadEditableReceipt(tenantId: string, receiptId: string) {
     include: { items: true },
   });
   if (!receipt) return null;
-  if (!canModifyReceipt(receipt.eetStatus)) return null;
+  if (
+    !canModifyReceipt({
+      eetStatus: receipt.eetStatus,
+      paidAt: receipt.paidAt,
+      kind: receipt.kind,
+    })
+  ) {
+    return null;
+  }
   return receipt;
 }
 
@@ -34,7 +42,7 @@ export async function deleteReceiptAction(formData: FormData): Promise<void> {
   const receipt = await loadEditableReceipt(tenantId, receiptId);
   if (!receipt) {
     throw new Error(
-      "Účtenku nelze smazat (nenalezena nebo už odeslaná do EET)."
+      "Účtenku nelze smazat (nenalezena, zaplacená nebo již odeslaná do EET)."
     );
   }
 
@@ -65,7 +73,8 @@ export async function updateReceiptItemsAction(
   const receipt = await loadEditableReceipt(tenantId, receiptId);
   if (!receipt) {
     return {
-      error: "Účtenku nelze upravit (nenalezena nebo už odeslaná do EET).",
+      error:
+        "Účtenku nelze upravit (nenalezena, zaplacená nebo již odeslaná do EET).",
     };
   }
 

@@ -53,6 +53,7 @@ export default async function SettingsPage() {
           priceCents: item.priceCents,
           category: item.category,
           active: item.active,
+          giftEligible: item.giftEligible,
           sortOrder: item.sortOrder,
         }))}
         sequenceRows={sequenceRows}

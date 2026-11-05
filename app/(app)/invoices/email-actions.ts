@@ -110,6 +110,10 @@ async function sendInvoiceMail(
       text,
       html,
       attachments,
+      tenantSettings: settings,
+      tenantId,
+      kind: `invoice_${kind}`,
+      meta: { invoiceId },
     });
   } catch (e) {
     return { error: formatSmtpError(e) };

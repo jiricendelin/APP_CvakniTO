@@ -1,6 +1,14 @@
-/** Úprava / smazání jen dokud není odesláno do EET (R13). */
-export function canModifyReceipt(eetStatus: string): boolean {
-  return eetStatus === "neodeslano" || eetStatus === "chyba";
+/** Úprava / smazání jen běžná nezaplacená účtenka s neodeslaným EET (R13). */
+export function canModifyReceipt(r: {
+  eetStatus: string;
+  paidAt: Date | null;
+  kind: string;
+}): boolean {
+  return (
+    (r.eetStatus === "neodeslano" || r.eetStatus === "chyba") &&
+    r.paidAt === null &&
+    r.kind === "bezna"
+  );
 }
 
 export function canSendReceiptToEet(eetStatus: string): boolean {

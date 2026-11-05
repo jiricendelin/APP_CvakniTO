@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   createPriceItemAction,
   setPriceItemActiveAction,
+  setPriceItemGiftEligibleAction,
   updatePriceItemAction,
   type PricelistActionState,
 } from "@/app/(app)/settings/pricelist/actions";
@@ -23,6 +24,7 @@ export type PriceItemRow = {
   priceCents: number;
   category: string;
   active: boolean;
+  giftEligible: boolean;
   sortOrder: number;
 };
 
@@ -217,6 +219,42 @@ function ToggleActiveButton({
   );
 }
 
+function ToggleGiftButton({
+  csrf,
+  item,
+}: {
+  csrf: string;
+  item: PriceItemRow;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState<
+    PricelistActionState,
+    FormData
+  >(setPriceItemGiftEligibleAction, {});
+
+  useEffect(() => {
+    if (state.success) router.refresh();
+  }, [state.success, router]);
+
+  return (
+    <form action={formAction}>
+      <CsrfField token={csrf} />
+      <input type="hidden" name="id" value={item.id} />
+      <input
+        type="hidden"
+        name="giftEligible"
+        value={item.giftEligible ? "false" : "true"}
+      />
+      <button
+        type="submit"
+        className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+      >
+        {item.giftEligible ? "Bez poukazu" : "Jako poukaz"}
+      </button>
+    </form>
+  );
+}
+
 function ItemRow({ csrf, item }: { csrf: string; item: PriceItemRow }) {
   const [editing, setEditing] = useState(false);
   const categoryLabel = isPriceCategory(item.category)
@@ -233,6 +271,7 @@ function ItemRow({ csrf, item }: { csrf: string; item: PriceItemRow }) {
           <p className="text-sm text-muted-foreground">
             {formatCzk(item.priceCents)} · {categoryLabel}
             {!item.active && " · neaktivní"}
+            {item.giftEligible && " · dárkový poukaz"}
           </p>
           <p className="text-xs text-muted-foreground">Pořadí {item.sortOrder}</p>
         </div>
@@ -246,6 +285,7 @@ function ItemRow({ csrf, item }: { csrf: string; item: PriceItemRow }) {
               Upravit
             </button>
           )}
+          <ToggleGiftButton csrf={csrf} item={item} />
           <ToggleActiveButton csrf={csrf} item={item} />
         </div>
       </div>

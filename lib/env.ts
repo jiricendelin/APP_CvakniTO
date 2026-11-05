@@ -16,4 +16,7 @@ export const env = {
   get bankIngestToken() {
     return process.env.BANK_INGEST_TOKEN ?? "";
   },
+  get cronSecret() {
+    return process.env.CRON_SECRET ?? "";
+  },
 };

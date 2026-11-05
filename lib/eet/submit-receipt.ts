@@ -233,8 +233,8 @@ export async function submitReceiptToEet(
 export async function tryAutoSendReceiptToEet(
   tenantId: string,
   receiptId: string
-): Promise<void> {
+): Promise<SubmitEetResult | null> {
   const settings = await getTenantSettings(tenantId);
-  if (!settings.eetAutoSend) return;
-  await submitReceiptToEet(tenantId, receiptId);
+  if (!settings.eetAutoSend) return null;
+  return submitReceiptToEet(tenantId, receiptId);
 }

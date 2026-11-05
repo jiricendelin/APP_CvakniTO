@@ -34,6 +34,20 @@ export async function updateEmailTemplatesAction(
     mailThanksSubject: formData.get("mailThanksSubject") ?? "",
     mailThanksText: formData.get("mailThanksText") ?? "",
     mailThanksHtml: formData.get("mailThanksHtml") ?? "",
+    mailVoucherSubject: formData.get("mailVoucherSubject") ?? "",
+    mailVoucherText: formData.get("mailVoucherText") ?? "",
+    mailVoucherHtml: formData.get("mailVoucherHtml") ?? "",
+    mailVoucherActivationSubject:
+      formData.get("mailVoucherActivationSubject") ?? "",
+    mailVoucherActivationText: formData.get("mailVoucherActivationText") ?? "",
+    mailVoucherActivationHtml: formData.get("mailVoucherActivationHtml") ?? "",
+    mailReceiptSubject: formData.get("mailReceiptSubject") ?? "",
+    mailReceiptText: formData.get("mailReceiptText") ?? "",
+    mailReceiptHtml: formData.get("mailReceiptHtml") ?? "",
+    mailReceiptReminderSubject:
+      formData.get("mailReceiptReminderSubject") ?? "",
+    mailReceiptReminderText: formData.get("mailReceiptReminderText") ?? "",
+    mailReceiptReminderHtml: formData.get("mailReceiptReminderHtml") ?? "",
   });
 
   if (!parsed.success) {

@@ -371,7 +371,7 @@ export function CustomersManager({
   return (
     <div className="mx-auto w-full max-w-lg space-y-6">
       <div className="space-y-2">
-        <h1 className="text-xl font-semibold">Zákazníci</h1>
+        <h1 className="text-xl font-semibold">Zákazníci FA</h1>
         <p className="text-sm text-muted-foreground">
           Adresář pro faktury. U firem načtěte údaje z ARES podle IČO.
         </p>

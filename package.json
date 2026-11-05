@@ -16,7 +16,9 @@
     "test:spayd": "tsx scripts/test-spayd.ts",
     "test:receipt-template": "tsx scripts/test-receipt-template.ts",
     "test:tenant-isolation": "tsx scripts/test-tenant-isolation.ts",
-    "test:tenant-isolation-http": "tsx scripts/test-tenant-isolation-http.ts"
+    "test:tenant-isolation-http": "tsx scripts/test-tenant-isolation-http.ts",
+    "test:voucher-sequence": "tsx scripts/test-voucher-sequence.ts",
+    "test:receipt-kinds": "tsx scripts/test-receipt-kind-reminders.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -35,6 +37,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "handlebars": "^4.7.9",
+    "imapflow": "^2.10.2",
     "lucide-react": "^1.48.0",
     "next": "^15.5.19",
     "nodemailer": "^10.0.12",
