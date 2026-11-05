@@ -15,17 +15,15 @@ export type VoucherPdfInput = {
   serviceName: string;
 };
 
-async function loadImageDataUrl(
+async function loadImage(
   tenantId: string,
   filename: string
-): Promise<string | null> {
+): Promise<Buffer | null> {
   if (!filename) return null;
   const full = resolveVoucherArtFile(tenantId, filename);
   if (!full) return null;
   try {
-    const buf = await readFile(full);
-    const ext = filename.toLowerCase().endsWith(".png") ? "png" : "jpeg";
-    return `data:image/${ext};base64,${buf.toString("base64")}`;
+    return await readFile(full);
   } catch {
     return null;
   }
@@ -43,8 +41,8 @@ export async function renderVoucherPdfBuffer(
   }
 
   const [frontImageSrc, backImageSrc] = await Promise.all([
-    loadImageDataUrl(input.tenantId, frontFile),
-    loadImageDataUrl(input.tenantId, input.settings.voucherBackImage ?? ""),
+    loadImage(input.tenantId, frontFile),
+    loadImage(input.tenantId, input.settings.voucherBackImage ?? ""),
   ]);
 
   const buffer = await renderToBuffer(

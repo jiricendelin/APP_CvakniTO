@@ -1,6 +1,6 @@
 # CvakniTO — HANDOFF (stav MVP)
 
-**Verze aplikace:** `1.23` (`lib/version.ts`)  
+**Verze aplikace:** `1.24` (`lib/version.ts`)  
 **Repo:** `https://github.com/jiricendelin/APP_CvakniTO`  
 **Produkce:** `https://cvaknito.cendelin.cz`  
 **Zdroj řezů:** `source/rezy.md` · **Zadání:** `source/zadani.md`
@@ -23,11 +23,21 @@ MVP z `rezy.md` je v kódu **hotové** (Fáze 1–4). Zbývají **manuální kro
 | **1.17** | R23 + R25 (základ) | `/reports`, `GET /api/reports/export`, `npm run test:tenant-isolation` |
 | **1.18** | R21–R24 | EET: `/settings/eet`, odeslání, auto po zaplacení, storno, opravná účtenka |
 | **1.23** | Poukazy | Dárkové poukazy (`/vouchers`), zákazníci DP + storno poplatky (`/gift-customers`), e-mail účtenky, podpis + IMAP kopie, denní cron (`/api/cron/daily`). Platby: účtenka zaplacená až při součtu plateb ≥ částka, ruční přiřazení platby v `/payments` a v detailu poukazu, QR účtenky EET až po zaplacení. |
+| **1.24** | PDF poukazu | A4 na výšku: přední + zadní strana DL (200 × 95 mm) pod sebou, dělicí čára, stříhací čára 5 mm pod zadní stranou. Oprava centrování čísla/platnosti, PNG i JPG. |
 
-### Provoz pro 1.23
+### Provoz pro 1.23 (hotovo 2026-11-05)
 
-- `CRON_SECRET` v Coolify + n8n Schedule (1× denně) → `POST /api/cron/daily`, header `Authorization: Bearer <CRON_SECRET>`.
-- Persistent volume na `VOUCHER_ART_DIR` (default `/data/vouchers`) — grafika poukazů.
+- `CRON_SECRET` v Coolify; n8n denní workflow 7:00 `Europe/Prague` (sdílený trigger s WTime, větve s On Error: Continue) → `POST http://cvaknito-app:3000/api/cron/daily`, Header Auth `Authorization: Bearer <CRON_SECRET>`.
+- Persistent volume `cvaknito-data` → `/data` (pokrývá `/data/vouchers` i `/data/eet`); env `VOUCHER_ART_DIR=/data/vouchers`, `EET_DATA_DIR=/data/eet`. Bez env by aplikace ukládala do `/app/data/...` mimo volume.
+
+### PDF poukazu — jak upravovat (1.24)
+
+- **Layout:** `lib/vouchers/pdf/voucher-pdf-document.tsx` — konstanty v mm nahoře (`CARD_*`, `FRONT_TOP`, `BACK_TOP`, `CUT_TOP`). Zadní strana se **neotáčí**.
+- **Číslo a platnost:** pozice v % **zadní strany** z nastavení (`voucherNumberX/Y`, `voucherValidX/Y`), text je vycentrovaný na daný bod přes `overlayPosition()`. Nepoužívat `transform: translate(-50%, …)` — v `@react-pdf` necentruje.
+- **Obrázky:** `lib/vouchers/pdf/render-voucher-pdf.tsx` předává `Buffer`, formát (JPG/PNG) pozná `@react-pdf` z obsahu. Grafika: DL na šířku, ideálně 2480 × 1181 px, RGB, max 5 MB. Upload: Nastavení → Grafika poukazu (`components/settings/voucher-art-form.tsx`).
+- **Font:** výchozí Helvetica — bez č/ř/ě/ů (WinAnsi). Pokud se do PDF bude psát text s diakritikou (např. název služby), nejdřív zaregistrovat font s diakritikou (`Font.register`).
+- **Lokální náhled PDF:** `tsx` s `@react-pdf` padá (`ERR_PACKAGE_PATH_NOT_EXPORTED`). Funguje: skript v `.tmp/` → `npx esbuild <skript>.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --outfile=.tmp/x.mjs` → `node .tmp/x.mjs`. Ověřit vždy vizuálně, ne jen buildem.
+- **Neověřeno:** výchozí pozice textů vůči skutečné grafice a tisk na papír — doladit po prvním zkušebním poukazu.
 
 ### Na později (z review 1.23)
 
@@ -132,4 +142,4 @@ Aktuální stav kódu: R20, R23, R25 (základ), R21–R24 pushnuté; chybí prov
 
 ---
 
-*Poslední aktualizace handoffu: 2026-03-29 (verze 1.18).*
+*Poslední aktualizace handoffu: 2026-11-06 (verze 1.24).*

@@ -58,8 +58,9 @@ export function VoucherArtForm({
     >
       <CsrfField token={csrf} />
       <p className="text-sm text-muted-foreground">
-        Nahrajte přední a zadní stranu (JPG/PNG). Na zadní straně se dosadí
-        evidenční číslo a platnost podle pozic v % stránky.
+        Nahrajte přední a zadní stranu ve formátu DL na šířku (210 × 100 mm,
+        ideálně 2480 × 1181 px), JPG nebo PNG. Na zadní straně se dosadí
+        evidenční číslo a platnost podle pozic v % zadní strany.
       </p>
 
       <label className="block space-y-1 text-sm">
@@ -69,7 +70,7 @@ export function VoucherArtForm({
             ? ` (nahráno: ${settings.voucherBackImage})`
             : ""}
         </span>
-        <input name="backImage" type="file" accept="image/*" className={fieldClass} />
+        <input name="backImage" type="file" accept="image/jpeg,image/png" className={fieldClass} />
       </label>
 
       <label className="block space-y-1 text-sm">
@@ -82,7 +83,7 @@ export function VoucherArtForm({
         <input
           name="valueFrontImage"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png"
           className={fieldClass}
         />
       </label>
@@ -103,7 +104,7 @@ export function VoucherArtForm({
         <input
           name="serviceFrontImage"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png"
           className={fieldClass}
         />
       </fieldset>
