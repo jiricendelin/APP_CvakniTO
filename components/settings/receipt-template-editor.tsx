@@ -26,7 +26,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:opacity-60 sm:w-auto"
     >
-      {pending ? "Ukládám…" : "Uložit šablonu"}
+      {pending ? "Ukládám…" : "Uložit"}
     </button>
   );
 }
@@ -86,13 +86,23 @@ export function ReceiptTemplateEditor({
           </button>
         </div>
 
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="receiptPdfDownload"
+            value="true"
+            defaultChecked={settings.receiptPdfDownload}
+          />
+          Zobrazovat v detailu účtenky tlačítko „Stáhnout PDF“
+        </label>
+
         {state.error && (
           <p className="text-sm text-red-700" role="alert">
             {state.error}
           </p>
         )}
         {state.success && (
-          <p className="text-sm text-primary">Šablona uložena.</p>
+          <p className="text-sm text-primary">Nastavení účtenky uloženo.</p>
         )}
 
         <SubmitButton />

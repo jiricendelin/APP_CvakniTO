@@ -2,7 +2,11 @@ import { notFound } from "next/navigation";
 import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getReceiptForTenant } from "@/lib/receipts/repository";
-import { canModifyReceipt } from "@/lib/receipts/eet-status";
+import {
+  canDeleteReceipt,
+  canModifyReceipt,
+} from "@/lib/receipts/eet-status";
+import { listGiftCustomersForTenant } from "@/lib/gift-customers/repository";
 import { getTenantSettings } from "@/lib/settings/repository";
 import { buildSpaydForReceipt } from "@/lib/spayd";
 import { renderReceiptPrintPayload } from "@/lib/receipt-template/render-print";
@@ -17,9 +21,10 @@ export default async function ReceiptDetailPage({
 }) {
   const { id } = await params;
   const [tenantId, csrf] = await Promise.all([getTenantId(), getCsrfToken()]);
-  const [receipt, settings] = await Promise.all([
+  const [receipt, settings, giftCustomers] = await Promise.all([
     getReceiptForTenant(tenantId, id),
     getTenantSettings(tenantId),
+    listGiftCustomersForTenant(tenantId),
   ]);
   if (!receipt) notFound();
 
@@ -39,11 +44,23 @@ export default async function ReceiptDetailPage({
   return (
     <ReceiptDetail
       printPayload={printPayload}
+      showPdfDownload={settings.receiptPdfDownload}
       canModify={canModifyReceipt({
         eetStatus: receipt.eetStatus,
         paidAt: receipt.paidAt,
         kind: receipt.kind,
       })}
+      canDelete={canDeleteReceipt({
+        eetStatus: receipt.eetStatus,
+        paidAt: receipt.paidAt,
+        kind: receipt.kind,
+      })}
+      giftCustomers={giftCustomers.map((c) => ({
+        id: c.id,
+        firstName: c.firstName,
+        lastName: c.lastName,
+        email: c.email,
+      }))}
       csrf={csrf}
       qrSpayd={qrSpayd}
       qrMissingIban={

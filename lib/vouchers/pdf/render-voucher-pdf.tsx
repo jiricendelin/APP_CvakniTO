@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { renderToBuffer } from "@react-pdf/renderer";
 import type { TenantSettings } from "@/lib/settings/schema";
 import { formatPragueDateCz } from "@/lib/time/prague-parts";
+import { registerInvoicePdfFonts } from "@/lib/invoices/pdf/register-fonts";
 import { resolveVoucherArtFile } from "../art-path";
 import { VoucherPdfDocument } from "./voucher-pdf-document";
 
@@ -32,6 +33,8 @@ async function loadImage(
 export async function renderVoucherPdfBuffer(
   input: VoucherPdfInput
 ): Promise<Buffer> {
+  registerInvoicePdfFonts();
+
   const fronts = input.settings.voucherFrontImages ?? {};
   let frontFile = "";
   if (input.kind === "value") {

@@ -66,7 +66,9 @@ export function VouchersList({ rows }: { rows: VoucherListRow[] }) {
                 ) : null}
               </td>
               <td className="px-3 py-2">{r.buyerName}</td>
-              <td className="px-3 py-2">{r.recipientName}</td>
+              <td className="px-3 py-2">
+                {r.recipientName.trim() ? r.recipientName : "—"}
+              </td>
               <td className="px-3 py-2 whitespace-nowrap">
                 {formatCzk(r.priceCents)}
               </td>

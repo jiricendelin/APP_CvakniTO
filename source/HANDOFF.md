@@ -35,9 +35,18 @@ MVP z `rezy.md` je v kódu **hotové** (Fáze 1–4). Zbývají **manuální kro
 - **Layout:** `lib/vouchers/pdf/voucher-pdf-document.tsx` — konstanty v mm nahoře (`CARD_*`, `FRONT_TOP`, `BACK_TOP`, `CUT_TOP`). Zadní strana se **neotáčí**.
 - **Číslo a platnost:** pozice v % **zadní strany** z nastavení (`voucherNumberX/Y`, `voucherValidX/Y`), text je vycentrovaný na daný bod přes `overlayPosition()`. Nepoužívat `transform: translate(-50%, …)` — v `@react-pdf` necentruje.
 - **Obrázky:** `lib/vouchers/pdf/render-voucher-pdf.tsx` předává `Buffer`, formát (JPG/PNG) pozná `@react-pdf` z obsahu. Grafika: DL na šířku, ideálně 2480 × 1181 px, RGB, max 5 MB. Upload: Nastavení → Grafika poukazu (`components/settings/voucher-art-form.tsx`).
-- **Font:** výchozí Helvetica — bez č/ř/ě/ů (WinAnsi). Pokud se do PDF bude psát text s diakritikou (např. název služby), nejdřív zaregistrovat font s diakritikou (`Font.register`).
+- **Font:** Roboto (viz níže „PDF a font“). Nepoužívat vestavěnou Helveticu — neumí č/ř/ě/ů/ň/ť/ď.
 - **Lokální náhled PDF:** `tsx` s `@react-pdf` padá (`ERR_PACKAGE_PATH_NOT_EXPORTED`). Funguje: skript v `.tmp/` → `npx esbuild <skript>.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --outfile=.tmp/x.mjs` → `node .tmp/x.mjs`. Ověřit vždy vizuálně, ne jen buildem.
 - **Neověřeno:** výchozí pozice textů vůči skutečné grafice a tisk na papír — doladit po prvním zkušebním poukazu.
+
+### PDF účtenky + font (rozpracováno, NEcommitnuto — příští verze 1.25)
+
+- **Font ve všech PDF:** Roboto z `public/fonts/` (Regular + Bold), registrace `registerInvoicePdfFonts()` v `lib/invoices/pdf/register-fonts.ts` — volá se v rendererech faktury, účtenky (`lib/receipts/pdf/render-receipt-pdf.tsx`) i poukazu (`lib/vouchers/pdf/render-voucher-pdf.tsx`); dokumenty mají `fontFamily: "Roboto"`. Nový PDF dokument = zavolat registraci + nastavit `fontFamily`. Ověřeno lokálním náhledem (diakritika v názvu firmy, adrese, položkách, tučné „Celkem“, fallback poukazu).
+- **Stažení PDF účtenky:** `GET /api/receipts/[id]/pdf` (`app/api/receipts/[id]/pdf/route.ts`, vzor podle faktur). Tlačítko „Stáhnout PDF“ v detailu účtenky (`components/receipts/receipt-detail.tsx`).
+- **Přepínač:** Nastavení → Šablona účtenky → „Zobrazovat v detailu účtenky tlačítko Stáhnout PDF“ (`receiptPdfDownload` v `tenantSettingsSchema`, výchozí zapnuto; ukládá se s šablonou v `app/(app)/settings/receipt-template/actions.ts`). Skrývá jen tlačítko, endpoint funguje dál.
+- **Před commitem:** zvednout `APP_VERSION` na `1.25`, doplnit řádek do tabulky výše, pak commit + push.
+- **Neověřeno:** klik na tlačítko v běžící aplikaci (stažení přes přihlášenou session) a uložení přepínače — ověřit po deployi.
+- **Náhled PDF lokálně:** `.tmp/font-preview.tsx` (účtenka + poukaz s českými znaky) → esbuild jako výše → `python -m http.server 8765 --directory .tmp` → `http://localhost:8765/view.html?f=receipt-font.pdf&s=1.3` (pdf.js z CDN). `.tmp/` je v `.gitignore`.
 
 ### Na později (z review 1.23)
 
@@ -142,4 +151,4 @@ Aktuální stav kódu: R20, R23, R25 (základ), R21–R24 pushnuté; chybí prov
 
 ---
 
-*Poslední aktualizace handoffu: 2026-11-06 (verze 1.24).*
+*Poslední aktualizace handoffu: 2026-11-06 (verze 1.24 + necommitnuté změny pro 1.25).*

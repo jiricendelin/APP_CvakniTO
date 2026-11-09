@@ -41,6 +41,7 @@ function overlayPosition(xPercent: number, yPercent: number, fontSize: number) {
 const styles = StyleSheet.create({
   page: {
     position: "relative",
+    fontFamily: "Roboto",
   },
   card: {
     position: "absolute",

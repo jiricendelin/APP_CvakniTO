@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -56,6 +56,12 @@ export type UnmatchedPaymentOption = {
   variableSymbol: string;
   message: string;
   createdAt: string;
+};
+
+export type GiftCustomerOption = {
+  id: string;
+  firstName: string;
+  lastName: string;
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -142,13 +148,20 @@ function MarkPaidForm({
 export function VoucherDetail({
   csrf,
   voucher,
+  giftCustomers = [],
   unmatchedPayments = [],
 }: {
   csrf: string;
   voucher: VoucherDetailData;
+  giftCustomers?: GiftCustomerOption[];
   unmatchedPayments?: UnmatchedPaymentOption[];
 }) {
   const router = useRouter();
+  const [recipientName, setRecipientName] = useState(voucher.recipientName);
+  const [recipientGiftCustomerId, setRecipientGiftCustomerId] = useState("");
+  useEffect(() => {
+    setRecipientName(voucher.recipientName);
+  }, [voucher.recipientName]);
   const [statusState, statusAction] = useActionState(updateVoucherStatusAction, {});
   const [extendState, extendAction] = useActionState(extendVoucherAction, {});
   const [mailState, mailAction] = useActionState(sendVoucherEmailAction, {});
@@ -243,15 +256,43 @@ export function VoucherDetail({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span>Obdarovaný</span>
+            <span>Obdarovaný (volitelné)</span>
             <input
               name="recipientName"
-              defaultValue={voucher.recipientName}
-              required
+              value={recipientName}
+              onChange={(e) => {
+                setRecipientGiftCustomerId("");
+                setRecipientName(e.target.value);
+              }}
               className={fieldClass}
             />
           </label>
         </div>
+        {giftCustomers.length > 0 ? (
+          <label className="space-y-1 text-sm block">
+            <span>Nebo vybrat ze zákazníků DP</span>
+            <select
+              name="recipientGiftCustomerId"
+              className={fieldClass}
+              value={recipientGiftCustomerId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setRecipientGiftCustomerId(id);
+                const c = giftCustomers.find((g) => g.id === id);
+                if (c) {
+                  setRecipientName(`${c.lastName} ${c.firstName}`.trim());
+                }
+              }}
+            >
+              <option value="">— nevybráno —</option>
+              {giftCustomers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.lastName} {c.firstName}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <label className="space-y-1 text-sm block">
           <span>E-mail</span>
           <input

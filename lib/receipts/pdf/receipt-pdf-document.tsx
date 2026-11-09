@@ -16,7 +16,7 @@ export type ReceiptPdfData = {
 };
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 11, fontFamily: "Helvetica" },
+  page: { padding: 40, fontSize: 11, fontFamily: "Roboto" },
   title: { fontSize: 18, marginBottom: 12 },
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
   muted: { color: "#555", marginBottom: 8 },

@@ -24,6 +24,7 @@ export const tenantSettingsSchema = z.object({
     .max(20_000)
     .optional()
     .default(DEFAULT_RECEIPT_TEMPLATE),
+  receiptPdfDownload: z.boolean().optional().default(true),
   ...smtpSettingsSchema.shape,
   ...mailTemplatesSchema.shape,
   ...mailExtraSettingsSchema.shape,
@@ -88,6 +89,7 @@ export function formToPaymentSettings(
 
 export const receiptTemplateFormSchema = z.object({
   receiptTemplate: z.string().max(20_000),
+  receiptPdfDownload: z.boolean(),
 });
 
 export function getReceiptTemplateSource(settings: TenantSettings): string {

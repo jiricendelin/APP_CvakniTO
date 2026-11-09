@@ -5,6 +5,7 @@ import type { TenantSettings } from "@/lib/settings/schema";
 import { formatPragueDateCz } from "@/lib/time/prague-parts";
 import { RECEIPT_KIND_LABELS, isReceiptKind } from "@/lib/receipts/kind";
 import { PAYMENT_TYPE_LABELS, isPaymentType } from "@/lib/receipts/payment-type";
+import { registerInvoicePdfFonts } from "@/lib/invoices/pdf/register-fonts";
 import { ReceiptPdfDocument, type ReceiptPdfData } from "./receipt-pdf-document";
 
 export type ReceiptPdfSource = {
@@ -21,6 +22,8 @@ export async function renderReceiptPdfBuffer(
   receipt: ReceiptPdfSource,
   settings: TenantSettings
 ): Promise<Buffer> {
+  registerInvoicePdfFonts();
+
   const spayd = buildSpaydForReceipt({
     bankAccount: settings.bankAccount,
     iban: settings.iban,

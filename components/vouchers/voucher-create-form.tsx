@@ -51,6 +51,8 @@ export function VoucherCreateForm({
   const router = useRouter();
   const [kind, setKind] = useState<"service" | "value">("service");
   const [priceItemId, setPriceItemId] = useState(priceItems[0]?.id ?? "");
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientGiftCustomerId, setRecipientGiftCustomerId] = useState("");
   const [state, formAction] = useActionState<VoucherActionState, FormData>(
     createVoucherAction,
     {}
@@ -123,10 +125,42 @@ export function VoucherCreateForm({
           <input name="buyerName" required className={fieldClass} />
         </label>
         <label className="space-y-1 text-sm">
-          <span>Obdarovaný</span>
-          <input name="recipientName" required className={fieldClass} />
+          <span>Obdarovaný (volitelné — doplníte později)</span>
+          <input
+            name="recipientName"
+            className={fieldClass}
+            value={recipientName}
+            onChange={(e) => {
+              setRecipientGiftCustomerId("");
+              setRecipientName(e.target.value);
+            }}
+          />
         </label>
       </div>
+
+      <label className="space-y-1 text-sm block">
+        <span>Nebo vybrat obdarovaného ze zákazníků DP</span>
+        <select
+          name="recipientGiftCustomerId"
+          className={fieldClass}
+          value={recipientGiftCustomerId}
+          onChange={(e) => {
+            const id = e.target.value;
+            setRecipientGiftCustomerId(id);
+            const c = giftCustomers.find((g) => g.id === id);
+            if (c) {
+              setRecipientName(`${c.lastName} ${c.firstName}`.trim());
+            }
+          }}
+        >
+          <option value="">— nevybráno —</option>
+          {giftCustomers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.lastName} {c.firstName}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1 text-sm">

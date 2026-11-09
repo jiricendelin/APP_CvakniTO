@@ -15,6 +15,7 @@ import {
 import { sendVoucherIssueMail } from "@/lib/mail/send-voucher-mail";
 import { addMonthsPrague } from "@/lib/time/prague-parts";
 import { formatSmtpError } from "@/lib/mail/send";
+import { resolveRecipientName } from "@/lib/vouchers/resolve-recipient";
 
 export type VoucherActionState = {
   error?: string;
@@ -38,10 +39,18 @@ export async function createVoucherAction(
   }
 
   const buyerName = String(formData.get("buyerName") ?? "").trim();
-  const recipientName = String(formData.get("recipientName") ?? "").trim();
+  const recipientNameRaw = String(formData.get("recipientName") ?? "").trim();
+  const recipientGiftCustomerId =
+    String(formData.get("recipientGiftCustomerId") ?? "").trim() || null;
   const buyerEmail = String(formData.get("buyerEmail") ?? "").trim();
   if (!buyerName) return { error: "Zadejte jméno kupujícího." };
-  if (!recipientName) return { error: "Zadejte jméno obdarovaného." };
+
+  const tenantId = await getTenantId();
+  const recipientName = await resolveRecipientName(
+    tenantId,
+    recipientNameRaw,
+    recipientGiftCustomerId
+  );
 
   const priceRaw = String(formData.get("price") ?? "");
   let priceCents = parseCzkInput(priceRaw);
@@ -50,8 +59,6 @@ export async function createVoucherAction(
     String(formData.get("giftCustomerId") ?? "").trim() || null;
   const note = String(formData.get("note") ?? "").trim();
   const sendEmail = formData.get("sendEmail") === "true";
-
-  const tenantId = await getTenantId();
 
   if (kindRaw === "service") {
     if (!priceItemId) return { error: "Vyberte službu z ceníku." };
@@ -235,7 +242,8 @@ export async function updateVoucherFieldsAction(
 
   const schema = z.object({
     buyerName: z.string().trim().min(1).max(200),
-    recipientName: z.string().trim().min(1).max(200),
+    recipientName: z.string().trim().max(200),
+    recipientGiftCustomerId: z.union([z.string().uuid(), z.literal("")]).optional(),
     buyerEmail: z.string().max(200).optional().default(""),
     note: z.string().max(2000).optional().default(""),
   });
@@ -243,6 +251,7 @@ export async function updateVoucherFieldsAction(
   const parsed = schema.safeParse({
     buyerName: formData.get("buyerName"),
     recipientName: formData.get("recipientName"),
+    recipientGiftCustomerId: formData.get("recipientGiftCustomerId"),
     buyerEmail: formData.get("buyerEmail"),
     note: formData.get("note"),
   });
@@ -257,11 +266,19 @@ export async function updateVoucherFieldsAction(
   });
   if (!row) return { error: "Poukaz nenalezen." };
 
+  const giftPickId =
+    parsed.data.recipientGiftCustomerId?.trim() || null;
+  const recipientName = await resolveRecipientName(
+    tenantId,
+    parsed.data.recipientName,
+    giftPickId
+  );
+
   await prisma.voucher.update({
     where: { id },
     data: {
       buyerName: parsed.data.buyerName,
-      recipientName: parsed.data.recipientName,
+      recipientName,
       buyerEmail: parsed.data.buyerEmail.trim(),
       note: parsed.data.note.trim(),
     },

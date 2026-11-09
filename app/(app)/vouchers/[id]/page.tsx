@@ -3,6 +3,7 @@ import { getCsrfToken } from "@/lib/auth/csrf";
 import { getTenantId } from "@/lib/auth";
 import { getVoucherForTenant } from "@/lib/vouchers/repository";
 import { listUnmatchedPaymentsForTenant } from "@/lib/payments/repository";
+import { listGiftCustomersForTenant } from "@/lib/gift-customers/repository";
 import { VoucherDetail } from "@/components/vouchers/voucher-detail";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -15,9 +16,10 @@ export default async function VoucherDetailPage({
 }) {
   const { id } = await params;
   const [csrf, tenantId] = await Promise.all([getCsrfToken(), getTenantId()]);
-  const [voucher, unmatchedRaw] = await Promise.all([
+  const [voucher, unmatchedRaw, giftCustomers] = await Promise.all([
     getVoucherForTenant(tenantId, id),
     listUnmatchedPaymentsForTenant(tenantId),
+    listGiftCustomersForTenant(tenantId),
   ]);
   if (!voucher) notFound();
 
@@ -34,6 +36,11 @@ export default async function VoucherDetailPage({
       <PageHeader title={`Poukaz ${voucher.number}`} />
       <VoucherDetail
         csrf={csrf}
+        giftCustomers={giftCustomers.map((c) => ({
+          id: c.id,
+          firstName: c.firstName,
+          lastName: c.lastName,
+        }))}
         unmatchedPayments={unmatchedPayments.map((p) => ({
           id: p.id,
           amountCents: p.amountCents,

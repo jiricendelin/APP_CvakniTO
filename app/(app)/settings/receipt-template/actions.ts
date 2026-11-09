@@ -27,6 +27,7 @@ export async function updateReceiptTemplateAction(
 
   const parsed = receiptTemplateFormSchema.safeParse({
     receiptTemplate: formData.get("receiptTemplate") ?? "",
+    receiptPdfDownload: formData.get("receiptPdfDownload") === "true",
   });
 
   if (!parsed.success) {
@@ -50,6 +51,7 @@ export async function updateReceiptTemplateAction(
   await saveTenantSettings(tenantId, {
     ...current,
     receiptTemplate: parsed.data.receiptTemplate,
+    receiptPdfDownload: parsed.data.receiptPdfDownload,
   });
 
   revalidatePath("/settings");

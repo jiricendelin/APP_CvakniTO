@@ -1,4 +1,4 @@
-/** Úprava / smazání jen běžná nezaplacená účtenka s neodeslaným EET (R13). */
+/** Úprava běžné účtenky dokud není odeslaná do EET (R13). */
 export function canModifyReceipt(r: {
   eetStatus: string;
   paidAt: Date | null;
@@ -6,9 +6,17 @@ export function canModifyReceipt(r: {
 }): boolean {
   return (
     (r.eetStatus === "neodeslano" || r.eetStatus === "chyba") &&
-    r.paidAt === null &&
     r.kind === "bezna"
   );
+}
+
+/** Smazání jen nezaplacená běžná účtenka s neodeslaným EET. */
+export function canDeleteReceipt(r: {
+  eetStatus: string;
+  paidAt: Date | null;
+  kind: string;
+}): boolean {
+  return canModifyReceipt(r) && r.paidAt === null;
 }
 
 export function canSendReceiptToEet(eetStatus: string): boolean {

@@ -11,7 +11,8 @@ import { ReceiptDeleteButton } from "./receipt-delete-button";
 import { PaymentQrSection } from "./payment-qr-section";
 import { ReceiptPrintButton } from "./receipt-print-button";
 import { ReceiptEetButtons } from "./receipt-eet-buttons";
-import { ReceiptEmailForm } from "./receipt-email-form";
+import { ReceiptEmailForm, type GiftCustomerOption } from "./receipt-email-form";
+import { ReceiptMarkPaidButton } from "./receipt-mark-paid-button";
 import { eetStatusLabel } from "@/lib/receipts/eet-status";
 import type { ReceiptPrintPayload } from "@/lib/receipt-template/render-print";
 import {
@@ -45,17 +46,23 @@ export type ReceiptDetailData = {
 export function ReceiptDetail({
   receipt,
   canModify,
+  canDelete,
+  giftCustomers,
   csrf,
   qrSpayd,
   qrMissingIban,
   printPayload,
+  showPdfDownload,
 }: {
   receipt: ReceiptDetailData;
   canModify: boolean;
+  canDelete: boolean;
+  giftCustomers: GiftCustomerOption[];
   csrf: string;
   qrSpayd?: string | null;
   qrMissingIban?: boolean;
   printPayload?: ReceiptPrintPayload | null;
+  showPdfDownload: boolean;
 }) {
   const paymentLabel = isPaymentType(receipt.paymentType)
     ? PAYMENT_TYPE_LABELS[receipt.paymentType]
@@ -147,7 +154,24 @@ export function ReceiptDetail({
 
       <ReceiptPrintButton printPayload={printPayload ?? null} />
 
-      <ReceiptEmailForm csrf={csrf} receiptId={receipt.id} />
+      {showPdfDownload && (
+        <a
+          href={`/api/receipts/${receipt.id}/pdf`}
+          className="inline-flex justify-center rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+        >
+          Stáhnout PDF
+        </a>
+      )}
+
+      {!receipt.paidAt && receipt.kind === "bezna" ? (
+        <ReceiptMarkPaidButton csrf={csrf} receiptId={receipt.id} />
+      ) : null}
+
+      <ReceiptEmailForm
+        csrf={csrf}
+        receiptId={receipt.id}
+        giftCustomers={giftCustomers}
+      />
 
       <ReceiptEetButtons
         csrf={csrf}
@@ -155,17 +179,21 @@ export function ReceiptDetail({
         eetStatus={receipt.eetStatus}
       />
 
-      {canModify && (
+      {canModify || canDelete ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Link
-            href={`/receipts/${receipt.id}/edit`}
-            className="inline-flex justify-center rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-          >
-            Upravit
-          </Link>
-          <ReceiptDeleteButton csrf={csrf} receiptId={receipt.id} />
+          {canModify ? (
+            <Link
+              href={`/receipts/${receipt.id}/edit`}
+              className="inline-flex justify-center rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+            >
+              Upravit
+            </Link>
+          ) : null}
+          {canDelete ? (
+            <ReceiptDeleteButton csrf={csrf} receiptId={receipt.id} />
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       <Link
         href="/receipts"
