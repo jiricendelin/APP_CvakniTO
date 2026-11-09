@@ -1,12 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import {
-  sendReceiptEmailAction,
-  type ReceiptEmailState,
-} from "@/app/(app)/receipts/email-actions";
 import { CsrfField } from "@/components/csrf-field";
 
 const fieldClass =
@@ -19,19 +14,6 @@ export type GiftCustomerOption = {
   email: string;
 };
 
-function SubmitButton({ disabled }: { disabled?: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending || disabled}
-      className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
-    >
-      {pending ? "Odesílám…" : "Odeslat účtenku e-mailem"}
-    </button>
-  );
-}
-
 export function ReceiptEmailForm({
   csrf,
   receiptId,
@@ -42,29 +24,48 @@ export function ReceiptEmailForm({
   giftCustomers: GiftCustomerOption[];
 }) {
   const router = useRouter();
-  const [state, formAction] = useActionState<ReceiptEmailState, FormData>(
-    sendReceiptEmailAction,
-    {}
-  );
   const [giftCustomerId, setGiftCustomerId] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
   const selected = useMemo(
     () => giftCustomers.find((c) => c.id === giftCustomerId),
     [giftCustomerId, giftCustomers]
   );
   const manualMode = !giftCustomerId;
   const selectedMissingEmail = selected && !selected.email.trim();
+  const submitDisabled = pending || (!manualMode && !!selectedMissingEmail);
 
-  useEffect(() => {
-    if (state.success) router.refresh();
-  }, [state.success, router]);
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setError(undefined);
+    setSuccess(undefined);
+    try {
+      const res = await fetch(`/api/receipts/${receiptId}/email`, {
+        method: "POST",
+        body: new FormData(e.currentTarget),
+      });
+      const data = (await res.json()) as { error?: string; success?: string };
+      if (!res.ok || data.error) {
+        setError(data.error ?? "Odeslání e-mailu selhalo.");
+        return;
+      }
+      setSuccess(data.success ?? "E-mail odeslán.");
+      router.refresh();
+    } catch {
+      setError("Odeslání e-mailu selhalo.");
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
     <form
-      action={formAction}
+      onSubmit={onSubmit}
       className="space-y-3 rounded-lg border border-border p-4"
     >
       <CsrfField token={csrf} />
-      <input type="hidden" name="receiptId" value={receiptId} />
       <input type="hidden" name="giftCustomerId" value={giftCustomerId} />
 
       <p className="text-sm font-medium">Odeslat e-mailem</p>
@@ -93,13 +94,15 @@ export function ReceiptEmailForm({
         fieldClass={fieldClass}
       />
 
-      {state.error ? (
-        <p className="text-sm text-destructive">{state.error}</p>
-      ) : null}
-      {state.success ? (
-        <p className="text-sm text-green-700">{state.success}</p>
-      ) : null}
-      <SubmitButton disabled={!manualMode && !!selectedMissingEmail} />
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {success ? <p className="text-sm text-green-700">{success}</p> : null}
+      <button
+        type="submit"
+        disabled={submitDisabled}
+        className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+      >
+        {pending ? "Odesílám…" : "Odeslat účtenku e-mailem"}
+      </button>
     </form>
   );
 }
@@ -124,7 +127,7 @@ function RecipientFields({
         </p>
         {selectedMissingEmail ? (
           <p className="text-destructive">
-            Zákazník DP nemá e-mail — doplňte ho v sekci Zákazníci DP, nebo
+            Zákazník DP nemá e-mail — doplňte ho v Zákaznících DP, nebo
             zvolte ruční odeslání.
           </p>
         ) : (

@@ -66,10 +66,9 @@ async function compileRawMessage(mail: {
   });
   const compiled = await compiler.sendMail(mail);
   const raw = compiled.message;
-  if (!Buffer.isBuffer(raw)) {
-    throw new Error("Nepodařilo se sestavit MIME zprávu.");
-  }
-  return raw;
+  if (Buffer.isBuffer(raw)) return raw;
+  if (raw instanceof Uint8Array) return Buffer.from(raw);
+  throw new Error("Nepodařilo se sestavit MIME zprávu.");
 }
 
 export async function sendMail(input: SendMailInput): Promise<void> {
