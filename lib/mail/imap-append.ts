@@ -8,6 +8,29 @@ export type ImapAppendInput = {
   rawMessage: Buffer;
 };
 
+const IMAP_CONNECT_TIMEOUT_MS = 12_000;
+const IMAP_APPEND_TIMEOUT_MS = 60_000;
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message: string
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 /**
  * Uloží odeslanou zprávu do složky Odeslané přes IMAP APPEND.
  * Vyžaduje imapEnabled + imapHost; login bere ze SMTP.
@@ -36,15 +59,29 @@ export async function appendToSentFolder(
       pass: smtp.smtpPassword,
     },
     logger: false,
+    connectionTimeout: IMAP_CONNECT_TIMEOUT_MS,
+    greetingTimeout: IMAP_CONNECT_TIMEOUT_MS,
+  });
+
+  client.on("error", (err: Error) => {
+    console.error("[imap]", err.message);
   });
 
   try {
-    await client.connect();
+    await withTimeout(
+      client.connect(),
+      IMAP_CONNECT_TIMEOUT_MS,
+      "IMAP připojení vypršelo."
+    );
     const folder = settings.imapSentFolder.trim() || "Sent";
-    await client.append(folder, rawMessage, ["\\Seen"]);
+    await withTimeout(
+      client.append(folder, rawMessage, ["\\Seen"]),
+      IMAP_APPEND_TIMEOUT_MS,
+      "IMAP ukládání do Odeslané vypršelo."
+    );
   } finally {
     try {
-      await client.logout();
+      client.close();
     } catch {
       /* ignore */
     }

@@ -1,6 +1,6 @@
 # CvakniTO — HANDOFF (stav MVP)
 
-**Verze aplikace:** `1.24` (`lib/version.ts`)  
+**Verze aplikace:** `1.26` (`lib/version.ts`)  
 **Repo:** `https://github.com/jiricendelin/APP_CvakniTO`  
 **Produkce:** `https://cvaknito.cendelin.cz`  
 **Zdroj řezů:** `source/rezy.md` · **Zadání:** `source/zadani.md`
@@ -24,6 +24,8 @@ MVP z `rezy.md` je v kódu **hotové** (Fáze 1–4). Zbývají **manuální kro
 | **1.18** | R21–R24 | EET: `/settings/eet`, odeslání, auto po zaplacení, storno, opravná účtenka |
 | **1.23** | Poukazy | Dárkové poukazy (`/vouchers`), zákazníci DP + storno poplatky (`/gift-customers`), e-mail účtenky, podpis + IMAP kopie, denní cron (`/api/cron/daily`). Platby: účtenka zaplacená až při součtu plateb ≥ částka, ruční přiřazení platby v `/payments` a v detailu poukazu, QR účtenky EET až po zaplacení. |
 | **1.24** | PDF poukazu | A4 na výšku: přední + zadní strana DL (200 × 95 mm) pod sebou, dělicí čára, stříhací čára 5 mm pod zadní stranou. Oprava centrování čísla/platnosti, PNG i JPG. |
+| **1.25** | Účtenky DP | Editace položek a platby, ruční uhrazení, e-mail do QDP, obdarovaný u poukazu, stažení PDF účtenky. |
+| **1.26** | Mail | Odeslání účtenky bez Application error; IMAP kopie do Odeslané je stejná zpráva včetně PDF (poukazy). |
 
 ### Provoz pro 1.23 (hotovo 2026-11-05)
 
@@ -39,12 +41,11 @@ MVP z `rezy.md` je v kódu **hotové** (Fáze 1–4). Zbývají **manuální kro
 - **Lokální náhled PDF:** `tsx` s `@react-pdf` padá (`ERR_PACKAGE_PATH_NOT_EXPORTED`). Funguje: skript v `.tmp/` → `npx esbuild <skript>.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --outfile=.tmp/x.mjs` → `node .tmp/x.mjs`. Ověřit vždy vizuálně, ne jen buildem.
 - **Neověřeno:** výchozí pozice textů vůči skutečné grafice a tisk na papír — doladit po prvním zkušebním poukazu.
 
-### PDF účtenky + font (rozpracováno, NEcommitnuto — příští verze 1.25)
+### PDF účtenky + font (v 1.25)
 
 - **Font ve všech PDF:** Roboto z `public/fonts/` (Regular + Bold), registrace `registerInvoicePdfFonts()` v `lib/invoices/pdf/register-fonts.ts` — volá se v rendererech faktury, účtenky (`lib/receipts/pdf/render-receipt-pdf.tsx`) i poukazu (`lib/vouchers/pdf/render-voucher-pdf.tsx`); dokumenty mají `fontFamily: "Roboto"`. Nový PDF dokument = zavolat registraci + nastavit `fontFamily`. Ověřeno lokálním náhledem (diakritika v názvu firmy, adrese, položkách, tučné „Celkem“, fallback poukazu).
 - **Stažení PDF účtenky:** `GET /api/receipts/[id]/pdf` (`app/api/receipts/[id]/pdf/route.ts`, vzor podle faktur). Tlačítko „Stáhnout PDF“ v detailu účtenky (`components/receipts/receipt-detail.tsx`).
 - **Přepínač:** Nastavení → Šablona účtenky → „Zobrazovat v detailu účtenky tlačítko Stáhnout PDF“ (`receiptPdfDownload` v `tenantSettingsSchema`, výchozí zapnuto; ukládá se s šablonou v `app/(app)/settings/receipt-template/actions.ts`). Skrývá jen tlačítko, endpoint funguje dál.
-- **Před commitem:** zvednout `APP_VERSION` na `1.25`, doplnit řádek do tabulky výše, pak commit + push.
 - **Neověřeno:** klik na tlačítko v běžící aplikaci (stažení přes přihlášenou session) a uložení přepínače — ověřit po deployi.
 - **Náhled PDF lokálně:** `.tmp/font-preview.tsx` (účtenka + poukaz s českými znaky) → esbuild jako výše → `python -m http.server 8765 --directory .tmp` → `http://localhost:8765/view.html?f=receipt-font.pdf&s=1.3` (pdf.js z CDN). `.tmp/` je v `.gitignore`.
 
@@ -52,8 +53,6 @@ MVP z `rezy.md` je v kódu **hotové** (Fáze 1–4). Zbývají **manuální kro
 
 - Cron autorizace jen POST + Bearer (zrušit `?token=`) — nejdřív ověřit, jak je cron nastavený v n8n.
 - Ruční přiřazení platby k **faktuře**.
-- IMAP kopie v Odeslané: chybí přílohy, předmět s diakritikou bez RFC 2047.
-- `mailLog.create` v `lib/mail/send.ts` obalit try/catch (jinak hrozí duplicitní upomínka).
 
 ---
 
@@ -151,4 +150,4 @@ Aktuální stav kódu: R20, R23, R25 (základ), R21–R24 pushnuté; chybí prov
 
 ---
 
-*Poslední aktualizace handoffu: 2026-11-06 (verze 1.24 + necommitnuté změny pro 1.25).*
+*Poslední aktualizace handoffu: 2026-11-09 (verze 1.26).*

@@ -24,17 +24,20 @@ export async function renderReceiptPdfBuffer(
 ): Promise<Buffer> {
   registerInvoicePdfFonts();
 
-  const spayd = buildSpaydForReceipt({
-    bankAccount: settings.bankAccount,
-    iban: settings.iban,
-    totalCents: receipt.totalCents,
-    variableSymbol: receipt.variableSymbol,
-    receiptNumber: receipt.number,
-  });
-
   let qrDataUrl: string | null = null;
-  if (spayd) {
-    qrDataUrl = await QRCode.toDataURL(spayd, { width: 240, margin: 1 });
+  try {
+    const spayd = buildSpaydForReceipt({
+      bankAccount: settings.bankAccount,
+      iban: settings.iban,
+      totalCents: receipt.totalCents,
+      variableSymbol: receipt.variableSymbol,
+      receiptNumber: receipt.number,
+    });
+    if (spayd) {
+      qrDataUrl = await QRCode.toDataURL(spayd, { width: 240, margin: 1 });
+    }
+  } catch (e) {
+    console.error("[renderReceiptPdfBuffer] QR/SPAYD skipped", e);
   }
 
   const data: ReceiptPdfData = {
@@ -55,6 +58,14 @@ export async function renderReceiptPdfBuffer(
       : receipt.kind,
   };
 
-  const buffer = await renderToBuffer(<ReceiptPdfDocument data={data} />);
+  // Izolace od React dispatcheru server action (jinak digest / Application error).
+  const buffer = await new Promise<Uint8Array>((resolve, reject) => {
+    setImmediate(() => {
+      void renderToBuffer(<ReceiptPdfDocument data={data} />).then(
+        resolve,
+        reject
+      );
+    });
+  });
   return Buffer.from(buffer);
 }

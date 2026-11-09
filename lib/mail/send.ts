@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import type { SmtpSettings } from "@/lib/settings/smtp-schema";
 import type { TenantSettings } from "@/lib/settings/schema";
 import { prisma } from "@/lib/prisma";
@@ -49,6 +50,28 @@ function applySignature(
   return { text: outText, html: outHtml };
 }
 
+/** Sestaví kompletní MIME (přílohy, RFC 2047 předmět) — stejný buffer jde na SMTP i do IMAP. */
+async function compileRawMessage(mail: {
+  from: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  attachments?: SendMailAttachment[];
+}): Promise<Buffer> {
+  const compiler = nodemailer.createTransport({
+    streamTransport: true,
+    buffer: true,
+    newline: "windows",
+  });
+  const compiled = await compiler.sendMail(mail);
+  const raw = compiled.message;
+  if (!Buffer.isBuffer(raw)) {
+    throw new Error("Nepodařilo se sestavit MIME zprávu.");
+  }
+  return raw;
+}
+
 export async function sendMail(input: SendMailInput): Promise<void> {
   const { text, html } = applySignature(
     input.text,
@@ -58,8 +81,9 @@ export async function sendMail(input: SendMailInput): Promise<void> {
 
   const transporter = createMailTransporter(input.settings);
   const from = mailFromAddress(input.settings);
+  const fromEmail = input.settings.smtpFromEmail.trim();
 
-  const info = await transporter.sendMail({
+  const raw = await compileRawMessage({
     from,
     to: input.to,
     subject: input.subject,
@@ -68,49 +92,19 @@ export async function sendMail(input: SendMailInput): Promise<void> {
     attachments: input.attachments,
   });
 
+  const info = await transporter.sendMail({
+    envelope: { from: fromEmail, to: input.to },
+    raw,
+  });
+
   let imapError = "";
   if (input.tenantSettings?.imapEnabled) {
     try {
-      const raw =
-        typeof info.message === "string"
-          ? Buffer.from(info.message)
-          : Buffer.isBuffer(info.message)
-            ? info.message
-            : null;
-
-      if (raw) {
-        await appendToSentFolder({
-          settings: input.tenantSettings,
-          smtp: input.settings,
-          rawMessage: raw,
-        });
-      } else {
-        // Nodemailer nemusí vrátit raw — sestavíme jednoduchou MIME kopii.
-        const boundary = `cvaknito_${Date.now()}`;
-        const parts: string[] = [
-          `From: ${from}`,
-          `To: ${input.to}`,
-          `Subject: ${input.subject}`,
-          `MIME-Version: 1.0`,
-          `Content-Type: multipart/alternative; boundary="${boundary}"`,
-          ``,
-          `--${boundary}`,
-          `Content-Type: text/plain; charset=utf-8`,
-          ``,
-          text,
-          `--${boundary}`,
-          `Content-Type: text/html; charset=utf-8`,
-          ``,
-          html,
-          `--${boundary}--`,
-          ``,
-        ];
-        await appendToSentFolder({
-          settings: input.tenantSettings,
-          smtp: input.settings,
-          rawMessage: Buffer.from(parts.join("\r\n"), "utf8"),
-        });
-      }
+      await appendToSentFolder({
+        settings: input.tenantSettings,
+        smtp: input.settings,
+        rawMessage: raw,
+      });
     } catch (e) {
       imapError = e instanceof Error ? e.message : "IMAP APPEND selhalo.";
       console.error("[sendMail] IMAP APPEND failed", imapError);
@@ -118,20 +112,24 @@ export async function sendMail(input: SendMailInput): Promise<void> {
   }
 
   if (input.tenantId) {
-    await prisma.mailLog.create({
-      data: {
-        tenantId: input.tenantId,
-        kind: input.kind ?? "generic",
-        toEmail: input.to,
-        subject: input.subject,
-        status: imapError ? "sent_imap_error" : "sent",
-        error: imapError,
-        meta: {
-          ...(input.meta ?? {}),
-          messageId: info.messageId ?? null,
+    try {
+      await prisma.mailLog.create({
+        data: {
+          tenantId: input.tenantId,
+          kind: input.kind ?? "generic",
+          toEmail: input.to,
+          subject: input.subject,
+          status: imapError ? "sent_imap_error" : "sent",
+          error: imapError,
+          meta: {
+            ...(input.meta ?? {}),
+            messageId: info.messageId ?? null,
+          },
         },
-      },
-    });
+      });
+    } catch (e) {
+      console.error("[sendMail] mailLog.create failed", e);
+    }
   }
 }
 
