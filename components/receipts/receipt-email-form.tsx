@@ -71,7 +71,7 @@ export function ReceiptEmailForm({
       <p className="text-sm font-medium">Odeslat e-mailem</p>
 
       <label className="block space-y-1 text-sm">
-        <span className="text-muted-foreground">Zákazník DP</span>
+        <span className="text-muted-foreground">Zákazník</span>
         <select
           className={fieldClass}
           value={giftCustomerId}
@@ -127,8 +127,8 @@ function RecipientFields({
         </p>
         {selectedMissingEmail ? (
           <p className="text-destructive">
-            Zákazník DP nemá e-mail — doplňte ho v Zákaznících DP, nebo
-            zvolte ruční odeslání.
+            Zákazník nemá e-mail — doplňte ho v kartotéce, nebo zvolte
+            ruční odeslání.
           </p>
         ) : (
           <p>

@@ -1,12 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   extendVoucherAction,
-  sendVoucherEmailAction,
   updateVoucherFieldsAction,
   updateVoucherStatusAction,
   type VoucherActionState,
@@ -164,14 +163,39 @@ export function VoucherDetail({
   }, [voucher.recipientName]);
   const [statusState, statusAction] = useActionState(updateVoucherStatusAction, {});
   const [extendState, extendAction] = useActionState(extendVoucherAction, {});
-  const [mailState, mailAction] = useActionState(sendVoucherEmailAction, {});
   const [fieldsState, fieldsAction] = useActionState(updateVoucherFieldsAction, {});
+  const [mailPending, setMailPending] = useState(false);
+  const [mailError, setMailError] = useState<string>();
+  const [mailSuccess, setMailSuccess] = useState<string>();
+
+  async function onSendMail(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setMailPending(true);
+    setMailError(undefined);
+    setMailSuccess(undefined);
+    try {
+      const res = await fetch(`/api/vouchers/${voucher.id}/email`, {
+        method: "POST",
+        body: new FormData(e.currentTarget),
+      });
+      const data = (await res.json()) as { error?: string; success?: string };
+      if (!res.ok || data.error) {
+        setMailError(data.error ?? "Odeslání e-mailu selhalo.");
+        return;
+      }
+      setMailSuccess(data.success ?? "E-mail odeslán.");
+      router.refresh();
+    } catch {
+      setMailError("Odeslání e-mailu selhalo.");
+    } finally {
+      setMailPending(false);
+    }
+  }
 
   useEffect(() => {
     if (
       statusState.success ||
       extendState.success ||
-      mailState.success ||
       fieldsState.success
     ) {
       router.refresh();
@@ -179,7 +203,6 @@ export function VoucherDetail({
   }, [
     statusState.success,
     extendState.success,
-    mailState.success,
     fieldsState.success,
     router,
   ]);
@@ -270,7 +293,7 @@ export function VoucherDetail({
         </div>
         {giftCustomers.length > 0 ? (
           <label className="space-y-1 text-sm block">
-            <span>Nebo vybrat ze zákazníků DP</span>
+            <span>Nebo vybrat ze zákazníků</span>
             <select
               name="recipientGiftCustomerId"
               className={fieldClass}
@@ -361,9 +384,11 @@ export function VoucherDetail({
         <ActionResult state={extendState} />
       </form>
 
-      <form action={mailAction} className="space-y-3 rounded-lg border border-border p-4">
+      <form
+        onSubmit={onSendMail}
+        className="space-y-3 rounded-lg border border-border p-4"
+      >
         <CsrfField token={csrf} />
-        <input type="hidden" name="id" value={voucher.id} />
         <p className="font-medium text-sm">Odeslat e-mail s poukazem</p>
         <label className="space-y-1 text-sm block">
           <span>E-mail (prázdné = e-mail kupujícího)</span>
@@ -374,8 +399,19 @@ export function VoucherDetail({
             className={fieldClass}
           />
         </label>
-        <SubmitButton label="Odeslat" />
-        <ActionResult state={mailState} />
+        <button
+          type="submit"
+          disabled={mailPending}
+          className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+        >
+          {mailPending ? "Odesílám…" : "Odeslat"}
+        </button>
+        {mailError ? (
+          <p className="text-sm text-destructive">{mailError}</p>
+        ) : null}
+        {mailSuccess ? (
+          <p className="text-sm text-green-700">{mailSuccess}</p>
+        ) : null}
       </form>
     </div>
   );

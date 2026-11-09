@@ -6,15 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { getTenantId } from "@/lib/auth";
 import { assertCsrf } from "@/lib/auth/csrf";
 import { parseCzkInput } from "@/lib/money";
-import { createVoucher } from "@/lib/vouchers/create-voucher";
 import {
-  isVoucherKind,
   isVoucherStatus,
   VOUCHER_STATUSES,
 } from "@/lib/vouchers/status";
-import { sendVoucherIssueMail } from "@/lib/mail/send-voucher-mail";
 import { addMonthsPrague } from "@/lib/time/prague-parts";
-import { formatSmtpError } from "@/lib/mail/send";
 import { resolveRecipientName } from "@/lib/vouchers/resolve-recipient";
 
 export type VoucherActionState = {
@@ -22,95 +18,6 @@ export type VoucherActionState = {
   success?: string;
   voucherId?: string;
 };
-
-export async function createVoucherAction(
-  _prev: VoucherActionState,
-  formData: FormData
-): Promise<VoucherActionState> {
-  try {
-    await assertCsrf(formData);
-  } catch {
-    return { error: "Neplatný CSRF token. Obnovte stránku." };
-  }
-
-  const kindRaw = String(formData.get("kind") ?? "");
-  if (!isVoucherKind(kindRaw)) {
-    return { error: "Vyberte druh poukazu." };
-  }
-
-  const buyerName = String(formData.get("buyerName") ?? "").trim();
-  const recipientNameRaw = String(formData.get("recipientName") ?? "").trim();
-  const recipientGiftCustomerId =
-    String(formData.get("recipientGiftCustomerId") ?? "").trim() || null;
-  const buyerEmail = String(formData.get("buyerEmail") ?? "").trim();
-  if (!buyerName) return { error: "Zadejte jméno kupujícího." };
-
-  const tenantId = await getTenantId();
-  const recipientName = await resolveRecipientName(
-    tenantId,
-    recipientNameRaw,
-    recipientGiftCustomerId
-  );
-
-  const priceRaw = String(formData.get("price") ?? "");
-  let priceCents = parseCzkInput(priceRaw);
-  const priceItemId = String(formData.get("priceItemId") ?? "").trim() || null;
-  const giftCustomerId =
-    String(formData.get("giftCustomerId") ?? "").trim() || null;
-  const note = String(formData.get("note") ?? "").trim();
-  const sendEmail = formData.get("sendEmail") === "true";
-
-  if (kindRaw === "service") {
-    if (!priceItemId) return { error: "Vyberte službu z ceníku." };
-    const item = await prisma.priceItem.findFirst({
-      where: {
-        id: priceItemId,
-        tenantId,
-        giftEligible: true,
-        active: true,
-      },
-    });
-    if (!item) return { error: "Služba není dostupná jako dárkový poukaz." };
-    priceCents = item.priceCents;
-  } else if (priceCents === null || priceCents <= 0) {
-    return { error: "Zadejte hodnotu poukazu v Kč." };
-  }
-
-  try {
-    const { voucherId } = await createVoucher({
-      tenantId,
-      kind: kindRaw,
-      priceItemId,
-      priceCents: priceCents!,
-      buyerName,
-      recipientName,
-      buyerEmail,
-      giftCustomerId,
-      note,
-    });
-
-    if (sendEmail) {
-      try {
-        await sendVoucherIssueMail(tenantId, voucherId);
-      } catch (e) {
-        revalidatePath("/vouchers");
-        return {
-          voucherId,
-          success: "Poukaz vytvořen, ale e-mail se nepodařilo odeslat.",
-          error: formatSmtpError(e),
-        };
-      }
-    }
-
-    revalidatePath("/vouchers");
-    revalidatePath("/receipts");
-    return { success: "Poukaz vystaven.", voucherId };
-  } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "Poukaz se nepodařilo vytvořit.",
-    };
-  }
-}
 
 export async function updateVoucherStatusAction(
   _prev: VoucherActionState,
@@ -201,30 +108,6 @@ export async function extendVoucherAction(
   revalidatePath("/vouchers");
   revalidatePath(`/vouchers/${id}`);
   return { success: "Platnost prodloužena." };
-}
-
-export async function sendVoucherEmailAction(
-  _prev: VoucherActionState,
-  formData: FormData
-): Promise<VoucherActionState> {
-  try {
-    await assertCsrf(formData);
-  } catch {
-    return { error: "Neplatný CSRF token." };
-  }
-
-  const id = String(formData.get("id") ?? "");
-  if (!id) return { error: "Chybí ID poukazu." };
-  const to = String(formData.get("to") ?? "").trim();
-
-  const tenantId = await getTenantId();
-  try {
-    await sendVoucherIssueMail(tenantId, id, to || undefined);
-    revalidatePath(`/vouchers/${id}`);
-    return { success: "E-mail s poukazem odeslán." };
-  } catch (e) {
-    return { error: formatSmtpError(e) };
-  }
 }
 
 export async function updateVoucherFieldsAction(

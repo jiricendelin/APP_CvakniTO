@@ -33,10 +33,10 @@ export async function dispatchReceiptEmail(
       tenantId,
       giftCustomerIdRaw
     );
-    if (!customer) return { error: "Zákazník DP nenalezen." };
+    if (!customer) return { error: "Zákazník nenalezen." };
     if (!customer.email.trim()) {
       return {
-        error: "Zákazník DP nemá e-mail — doplňte ho v Zákaznících DP.",
+        error: "Zákazník nemá e-mail — doplňte ho v kartotéce.",
       };
     }
     to = customer.email.trim();
@@ -66,16 +66,16 @@ export async function dispatchReceiptEmail(
       });
       return {
         success: created
-          ? "E-mail odeslán. Zákazník DP založen."
-          : "E-mail odeslán. Zákazník DP doplněn.",
+          ? "E-mail odeslán. Zákazník založen."
+          : "E-mail odeslán. Zákazník doplněn.",
       };
     } catch (e) {
       console.error("[dispatchReceiptEmail] upsert GiftCustomer", e);
       return {
-        success: "E-mail odeslán. Zákazníka DP se nepodařilo uložit.",
+        success: "E-mail odeslán. Zákazníka se nepodařilo uložit.",
       };
     }
   }
 
-  return { success: "E-mail odeslán zákazníkovi DP." };
+  return { success: "E-mail odeslán." };
 }

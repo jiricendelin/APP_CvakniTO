@@ -1,13 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import {
-  createVoucherAction,
-  type VoucherActionState,
-} from "@/app/(app)/vouchers/actions";
 import { CsrfField } from "@/components/csrf-field";
+import {
+  PersonPickFields,
+  type PersonPickCustomer,
+} from "@/components/gift-customers/person-pick-fields";
 import { VOUCHER_KIND_LABELS } from "@/lib/vouchers/status";
 
 const fieldClass =
@@ -19,23 +18,18 @@ type PriceItemOption = {
   priceCents: number;
 };
 
-type GiftCustomerOption = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-};
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-    >
-      {pending ? "Vystavuji…" : "Vystavit poukaz"}
-    </button>
+    <fieldset className="space-y-3 rounded-lg border border-border p-4">
+      <legend className="px-1 text-sm font-medium">{title}</legend>
+      {children}
+    </fieldset>
   );
 }
 
@@ -46,33 +40,62 @@ export function VoucherCreateForm({
 }: {
   csrf: string;
   priceItems: PriceItemOption[];
-  giftCustomers: GiftCustomerOption[];
+  giftCustomers: PersonPickCustomer[];
 }) {
   const router = useRouter();
   const [kind, setKind] = useState<"service" | "value">("service");
   const [priceItemId, setPriceItemId] = useState(priceItems[0]?.id ?? "");
-  const [recipientName, setRecipientName] = useState("");
-  const [recipientGiftCustomerId, setRecipientGiftCustomerId] = useState("");
-  const [state, formAction] = useActionState<VoucherActionState, FormData>(
-    createVoucherAction,
-    {}
-  );
-
-  useEffect(() => {
-    if (state.voucherId) {
-      router.push(`/vouchers/${state.voucherId}`);
-      router.refresh();
-    }
-  }, [state.voucherId, router]);
+  const [sendEmail, setSendEmail] = useState(true);
+  const [buyerMissingEmail, setBuyerMissingEmail] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
 
   const selected = priceItems.find((p) => p.id === priceItemId);
+  const submitDisabled =
+    pending || (sendEmail && buyerMissingEmail);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setError(undefined);
+    setSuccess(undefined);
+    try {
+      const res = await fetch("/api/vouchers", {
+        method: "POST",
+        body: new FormData(e.currentTarget),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        success?: string;
+        voucherId?: string;
+      };
+      if (data.error && !data.voucherId) {
+        setError(data.error);
+        return;
+      }
+      if (data.error) {
+        setError(data.error);
+      }
+      if (data.voucherId) {
+        router.push(`/vouchers/${data.voucherId}`);
+        router.refresh();
+        return;
+      }
+      setSuccess(data.success);
+    } catch {
+      setError("Poukaz se nepodařilo vystavit.");
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-4 rounded-lg border border-border p-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <CsrfField token={csrf} />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1 text-sm">
+      <Section title="Poukaz">
+        <label className="block space-y-1 text-sm">
           <span>Druh</span>
           <select
             name="kind"
@@ -88,7 +111,7 @@ export function VoucherCreateForm({
         </label>
 
         {kind === "service" ? (
-          <label className="space-y-1 text-sm">
+          <label className="block space-y-1 text-sm">
             <span>Služba</span>
             <select
               name="priceItemId"
@@ -108,96 +131,72 @@ export function VoucherCreateForm({
               )}
             </select>
             {selected ? (
-              <input type="hidden" name="price" value={(selected.priceCents / 100).toFixed(2).replace(".", ",")} />
+              <input
+                type="hidden"
+                name="price"
+                value={(selected.priceCents / 100).toFixed(2).replace(".", ",")}
+              />
             ) : null}
           </label>
         ) : (
-          <label className="space-y-1 text-sm">
+          <label className="block space-y-1 text-sm">
             <span>Hodnota (Kč)</span>
-            <input name="price" required className={fieldClass} placeholder="1000" />
+            <input
+              name="price"
+              required
+              className={fieldClass}
+              placeholder="1000"
+            />
           </label>
         )}
-      </div>
+      </Section>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1 text-sm">
-          <span>Kupující</span>
-          <input name="buyerName" required className={fieldClass} />
+      <Section title="Kupující">
+        <PersonPickFields
+          namePrefix="buyer"
+          customers={giftCustomers}
+          fieldClass={fieldClass}
+          requireName
+          emailRequired={sendEmail}
+          onMissingEmailChange={setBuyerMissingEmail}
+        />
+      </Section>
+
+      <Section title="Obdarovaný">
+        <PersonPickFields
+          namePrefix="recipient"
+          customers={giftCustomers}
+          fieldClass={fieldClass}
+        />
+      </Section>
+
+      <Section title="Poznámka">
+        <label className="block space-y-1 text-sm">
+          <span className="text-muted-foreground">Poznámka k poukazu</span>
+          <textarea name="note" rows={2} className={fieldClass} />
         </label>
-        <label className="space-y-1 text-sm">
-          <span>Obdarovaný (volitelné — doplníte později)</span>
+        <label className="flex items-center gap-2 text-sm">
           <input
-            name="recipientName"
-            className={fieldClass}
-            value={recipientName}
-            onChange={(e) => {
-              setRecipientGiftCustomerId("");
-              setRecipientName(e.target.value);
-            }}
+            type="checkbox"
+            name="sendEmail"
+            value="true"
+            checked={sendEmail}
+            onChange={(e) => setSendEmail(e.target.checked)}
           />
+          Odeslat e-mail s poukazem a účtenkou
         </label>
-      </div>
+      </Section>
 
-      <label className="space-y-1 text-sm block">
-        <span>Nebo vybrat obdarovaného ze zákazníků DP</span>
-        <select
-          name="recipientGiftCustomerId"
-          className={fieldClass}
-          value={recipientGiftCustomerId}
-          onChange={(e) => {
-            const id = e.target.value;
-            setRecipientGiftCustomerId(id);
-            const c = giftCustomers.find((g) => g.id === id);
-            if (c) {
-              setRecipientName(`${c.lastName} ${c.firstName}`.trim());
-            }
-          }}
-        >
-          <option value="">— nevybráno —</option>
-          {giftCustomers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.lastName} {c.firstName}
-            </option>
-          ))}
-        </select>
-      </label>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {success ? <p className="text-sm text-green-700">{success}</p> : null}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1 text-sm">
-          <span>E-mail kupujícího</span>
-          <input name="buyerEmail" type="email" className={fieldClass} />
-        </label>
-        <label className="space-y-1 text-sm">
-          <span>Zákazník DP (volitelné)</span>
-          <select name="giftCustomerId" className={fieldClass} defaultValue="">
-            <option value="">—</option>
-            {giftCustomers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.lastName} {c.firstName}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <label className="space-y-1 text-sm block">
-        <span>Poznámka</span>
-        <textarea name="note" rows={2} className={fieldClass} />
-      </label>
-
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="sendEmail" value="true" defaultChecked />
-        Odeslat e-mail s poukazem a účtenkou
-      </label>
-
-      {state.error ? (
-        <p className="text-sm text-destructive">{state.error}</p>
-      ) : null}
-      {state.success && !state.voucherId ? (
-        <p className="text-sm text-green-700">{state.success}</p>
-      ) : null}
-
-      <SubmitButton />
+      <button
+        type="submit"
+        disabled={submitDisabled}
+        className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60 sm:w-auto"
+      >
+        {pending ? "Vystavuji…" : "Vystavit poukaz"}
+      </button>
     </form>
   );
 }

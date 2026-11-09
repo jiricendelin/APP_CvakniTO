@@ -1,6 +1,6 @@
 # CvakniTO — HANDOFF (stav MVP)
 
-**Verze aplikace:** `1.27` (`lib/version.ts`)  
+**Verze aplikace:** `1.28` (`lib/version.ts`)  
 **Repo:** `https://github.com/jiricendelin/APP_CvakniTO`  
 **Produkce:** `https://cvaknito.cendelin.cz`  
 **Zdroj řezů:** `source/rezy.md` · **Zadání:** `source/zadani.md`
@@ -27,6 +27,7 @@ MVP z `rezy.md` je v kódu **hotové** (Fáze 1–4). Zbývají **manuální kro
 | **1.25** | Účtenky DP | Editace položek a platby, ruční uhrazení, e-mail do QDP, obdarovaný u poukazu, stažení PDF účtenky. |
 | **1.26** | Mail | Odeslání účtenky bez Application error; IMAP kopie do Odeslané je stejná zpráva včetně PDF (poukazy). |
 | **1.27** | Mail | Odeslání účtenky e-mailem přes API routu (ne server action) — digest / Application error. |
+| **1.28** | Poukazy | Vystavení poukazu v sekcích (poukaz / kupující / obdarovaný / poznámka), výběr ze zákazníků; e-mail poukazu přes API. Hlášky bez „DP“. |
 
 ### Provoz pro 1.23 (hotovo 2026-11-05)
 
@@ -151,4 +152,4 @@ Aktuální stav kódu: R20, R23, R25 (základ), R21–R24 pushnuté; chybí prov
 
 ---
 
-*Poslední aktualizace handoffu: 2026-11-09 (verze 1.27).*
+*Poslední aktualizace handoffu: 2026-11-09 (verze 1.28).*

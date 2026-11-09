@@ -43,7 +43,7 @@ async function assertOwned(tenantId: string, id: string) {
     where: { id, tenantId },
     select: { id: true },
   });
-  if (!row) throw new Error("Zákazník DP nenalezen.");
+  if (!row) throw new Error("Zákazník nenalezen.");
 }
 
 export async function createGiftCustomerAction(
@@ -79,7 +79,7 @@ export async function createGiftCustomerAction(
   });
 
   revalidatePath("/gift-customers");
-  return { success: "Zákazník DP vytvořen." };
+  return { success: "Zákazník vytvořen." };
 }
 
 export async function updateGiftCustomerAction(
@@ -116,7 +116,7 @@ export async function updateGiftCustomerAction(
   try {
     await assertOwned(tenantId, id);
   } catch {
-    return { error: "Zákazník DP nenalezen." };
+    return { error: "Zákazník nenalezen." };
   }
 
   await prisma.giftCustomer.update({
@@ -145,7 +145,7 @@ export async function deleteGiftCustomerAction(
   try {
     await assertOwned(tenantId, id);
   } catch {
-    return { error: "Zákazník DP nenalezen." };
+    return { error: "Zákazník nenalezen." };
   }
 
   await prisma.giftCustomer.delete({ where: { id } });

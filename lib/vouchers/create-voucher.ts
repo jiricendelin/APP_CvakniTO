@@ -63,7 +63,7 @@ export async function createVoucher(
       where: { id: input.giftCustomerId, tenantId: input.tenantId },
     });
     if (!customer) {
-      throw new Error("Zákazník DP nenalezen.");
+      throw new Error("Zákazník nenalezen.");
     }
   }
 

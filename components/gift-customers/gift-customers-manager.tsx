@@ -124,7 +124,7 @@ function CustomerForm({
       />
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
       {state.success ? <p className="text-sm text-green-700">{state.success}</p> : null}
-      <SubmitButton label={customer ? "Uložit" : "Přidat zákazníka DP"} />
+      <SubmitButton label={customer ? "Uložit" : "Přidat zákazníka"} />
     </form>
   );
 }
@@ -201,7 +201,7 @@ export function GiftCustomersManager({
 
       <div className="space-y-3">
         {customers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Žádní zákazníci DP.</p>
+          <p className="text-sm text-muted-foreground">Žádní zákazníci.</p>
         ) : (
           customers.map((c) => (
             <div key={c.id} className="rounded-lg border border-border p-4">
