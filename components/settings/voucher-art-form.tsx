@@ -1,12 +1,7 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useFormStatus } from "react-dom";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import {
-  updateVoucherArtAction,
-  type MailExtraFormState,
-} from "@/app/(app)/settings/mail-extra/actions";
 import { CsrfField } from "@/components/csrf-field";
 import type { TenantSettings } from "@/lib/settings/schema";
 
@@ -14,19 +9,6 @@ const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 
 type PriceItemOption = { id: string; name: string; giftEligible: boolean };
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-    >
-      {pending ? "Ukládám…" : "Uložit grafiku poukazu"}
-    </button>
-  );
-}
 
 export function VoucherArtForm({
   csrf,
@@ -38,21 +20,40 @@ export function VoucherArtForm({
   priceItems: PriceItemOption[];
 }) {
   const router = useRouter();
-  const [state, formAction] = useActionState<MailExtraFormState, FormData>(
-    updateVoucherArtAction,
-    {}
-  );
-
-  useEffect(() => {
-    if (state.success) router.refresh();
-  }, [state.success, router]);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
 
   const giftItems = priceItems.filter((p) => p.giftEligible);
   const fronts = settings.voucherFrontImages ?? {};
 
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setError(undefined);
+    setSuccess(undefined);
+    try {
+      const res = await fetch("/api/settings/voucher-art", {
+        method: "POST",
+        body: new FormData(e.currentTarget),
+      });
+      const data = (await res.json()) as { error?: string; success?: string };
+      if (!res.ok || data.error) {
+        setError(data.error ?? "Uložení grafiky selhalo.");
+        return;
+      }
+      setSuccess(data.success ?? "Grafika poukazu uložena.");
+      router.refresh();
+    } catch {
+      setError("Uložení grafiky selhalo.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <form
-      action={formAction}
+      onSubmit={onSubmit}
       encType="multipart/form-data"
       className="mx-auto w-full max-w-lg space-y-4"
     >
@@ -171,13 +172,15 @@ export function VoucherArtForm({
         </label>
       </fieldset>
 
-      {state.error ? (
-        <p className="text-sm text-destructive">{state.error}</p>
-      ) : null}
-      {state.success ? (
-        <p className="text-sm text-green-700">{state.success}</p>
-      ) : null}
-      <SubmitButton />
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {success ? <p className="text-sm text-green-700">{success}</p> : null}
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+      >
+        {pending ? "Ukládám…" : "Uložit grafiku poukazu"}
+      </button>
     </form>
   );
 }
