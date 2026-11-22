@@ -88,7 +88,10 @@ function AddItemForm({ csrf }: { csrf: string }) {
   }, [state.success, router]);
 
   return (
-    <form action={formAction} className="space-y-3 rounded-lg border border-border p-4">
+    <form
+      action={formAction}
+      className="space-y-3 rounded-lg border border-border bg-muted/50 p-4"
+    >
       <p className="text-sm font-medium">Nová položka</p>
       <CsrfField token={csrf} />
       <input
@@ -263,7 +266,7 @@ function ItemRow({ csrf, item }: { csrf: string; item: PriceItemRow }) {
 
   return (
     <li
-      className={`rounded-lg border border-border p-4 ${!item.active ? "opacity-60" : ""}`}
+      className={`rounded-lg border border-border bg-muted/50 p-4 ${!item.active ? "opacity-60" : ""}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 space-y-1">

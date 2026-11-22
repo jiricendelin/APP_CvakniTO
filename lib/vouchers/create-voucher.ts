@@ -30,29 +30,23 @@ export async function createVoucher(
   await ensureSequencesForTenant(input.tenantId);
   await ensureVoucherSequence(input.tenantId);
 
-  let serviceName = "Dárkový poukaz — hodnota";
-  let priceItemId: string | null = null;
-  let category = "ostatni";
-
-  if (input.kind === "service") {
-    if (!input.priceItemId) {
-      throw new Error("Vyberte službu z ceníku.");
-    }
-    const item = await prisma.priceItem.findFirst({
-      where: {
-        id: input.priceItemId,
-        tenantId: input.tenantId,
-        active: true,
-        giftEligible: true,
-      },
-    });
-    if (!item) {
-      throw new Error("Položka ceníku není dostupná jako dárkový poukaz.");
-    }
-    serviceName = item.name;
-    priceItemId = item.id;
-    category = item.category;
+  if (!input.priceItemId) {
+    throw new Error("Vyberte položku z ceníku.");
   }
+  const item = await prisma.priceItem.findFirst({
+    where: {
+      id: input.priceItemId,
+      tenantId: input.tenantId,
+      active: true,
+      giftEligible: true,
+    },
+  });
+  if (!item) {
+    throw new Error("Položka ceníku není dostupná jako dárkový poukaz.");
+  }
+  const serviceName = item.name;
+  const priceItemId = item.id;
+  const category = item.category;
 
   if (input.priceCents <= 0) {
     throw new Error("Cena musí být větší než nula.");

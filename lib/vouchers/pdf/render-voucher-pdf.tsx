@@ -1,7 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { renderToBuffer } from "@react-pdf/renderer";
 import type { TenantSettings } from "@/lib/settings/schema";
-import { formatPragueDateCz } from "@/lib/time/prague-parts";
+import {
+  addMonthsPrague,
+  formatPragueDateCz,
+} from "@/lib/time/prague-parts";
 import { registerInvoicePdfFonts } from "@/lib/invoices/pdf/register-fonts";
 import { resolveVoucherArtFile } from "../art-path";
 import { VoucherPdfDocument } from "./voucher-pdf-document";
@@ -37,10 +40,12 @@ export async function renderVoucherPdfBuffer(
 
   const fronts = input.settings.voucherFrontImages ?? {};
   let frontFile = "";
-  if (input.kind === "value") {
-    frontFile = input.settings.voucherValueFrontImage ?? "";
-  } else if (input.priceItemId) {
+  if (input.priceItemId) {
     frontFile = fronts[input.priceItemId] ?? "";
+  }
+  // Starší hodnotové poukazy bez položky ceníku.
+  if (!frontFile && input.kind === "value") {
+    frontFile = input.settings.voucherValueFrontImage ?? "";
   }
 
   const [frontImageSrc, backImageSrc] = await Promise.all([
@@ -53,7 +58,7 @@ export async function renderVoucherPdfBuffer(
       frontImageSrc={frontImageSrc}
       backImageSrc={backImageSrc}
       number={input.number}
-      validUntilLabel={`Platnost do: ${formatPragueDateCz(input.validUntil)}`}
+      validUntilLabel={formatPragueDateCz(input.validUntil)}
       numberX={input.settings.voucherNumberX ?? 50}
       numberY={input.settings.voucherNumberY ?? 70}
       validX={input.settings.voucherValidX ?? 50}
@@ -65,4 +70,43 @@ export async function renderVoucherPdfBuffer(
   );
 
   return Buffer.from(buffer);
+}
+
+export type VoucherArtPreviewOverrides = {
+  voucherNumberX?: number;
+  voucherNumberY?: number;
+  voucherValidX?: number;
+  voucherValidY?: number;
+  voucherNumberFontSize?: number;
+  voucherValidFontSize?: number;
+};
+
+/** Náhled A4 s výplňkovými údaji — pro ladění pozic na zadní straně. */
+export async function renderVoucherArtPreviewPdf(
+  tenantId: string,
+  settings: TenantSettings,
+  overrides: VoucherArtPreviewOverrides = {}
+): Promise<Buffer> {
+  const merged: TenantSettings = {
+    ...settings,
+    voucherNumberX: overrides.voucherNumberX ?? settings.voucherNumberX,
+    voucherNumberY: overrides.voucherNumberY ?? settings.voucherNumberY,
+    voucherValidX: overrides.voucherValidX ?? settings.voucherValidX,
+    voucherValidY: overrides.voucherValidY ?? settings.voucherValidY,
+    voucherNumberFontSize:
+      overrides.voucherNumberFontSize ?? settings.voucherNumberFontSize,
+    voucherValidFontSize:
+      overrides.voucherValidFontSize ?? settings.voucherValidFontSize,
+  };
+
+  const frontIds = Object.keys(merged.voucherFrontImages ?? {});
+  return renderVoucherPdfBuffer({
+    tenantId,
+    settings: merged,
+    number: "DP-2026-0001",
+    validUntil: addMonthsPrague(new Date(), 6),
+    kind: "service",
+    priceItemId: frontIds[0] ?? null,
+    serviceName: "Náhled poukazu",
+  });
 }

@@ -7,10 +7,12 @@ import {
   PersonPickFields,
   type PersonPickCustomer,
 } from "@/components/gift-customers/person-pick-fields";
-import { VOUCHER_KIND_LABELS } from "@/lib/vouchers/status";
 
 const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
+
+const sectionClass =
+  "space-y-3 rounded-lg border border-border bg-muted/50 p-4";
 
 type PriceItemOption = {
   id: string;
@@ -26,7 +28,7 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="space-y-3 rounded-lg border border-border p-4">
+    <fieldset className={sectionClass}>
       <legend className="px-1 text-sm font-medium">{title}</legend>
       {children}
     </fieldset>
@@ -43,7 +45,6 @@ export function VoucherCreateForm({
   giftCustomers: PersonPickCustomer[];
 }) {
   const router = useRouter();
-  const [kind, setKind] = useState<"service" | "value">("service");
   const [priceItemId, setPriceItemId] = useState(priceItems[0]?.id ?? "");
   const [sendEmail, setSendEmail] = useState(true);
   const [buyerMissingEmail, setBuyerMissingEmail] = useState(false);
@@ -51,7 +52,6 @@ export function VoucherCreateForm({
   const [error, setError] = useState<string>();
   const [success, setSuccess] = useState<string>();
 
-  const selected = priceItems.find((p) => p.id === priceItemId);
   const submitDisabled =
     pending || (sendEmail && buyerMissingEmail);
 
@@ -96,59 +96,25 @@ export function VoucherCreateForm({
 
       <Section title="Poukaz">
         <label className="block space-y-1 text-sm">
-          <span>Druh</span>
+          <span>Položka ceníku</span>
           <select
-            name="kind"
+            name="priceItemId"
             className={fieldClass}
-            value={kind}
-            onChange={(e) =>
-              setKind(e.target.value === "value" ? "value" : "service")
-            }
+            value={priceItemId}
+            onChange={(e) => setPriceItemId(e.target.value)}
+            required
           >
-            <option value="service">{VOUCHER_KIND_LABELS.service}</option>
-            <option value="value">{VOUCHER_KIND_LABELS.value}</option>
+            {priceItems.length === 0 ? (
+              <option value="">Žádná položka s povoleným poukazem</option>
+            ) : (
+              priceItems.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({(p.priceCents / 100).toFixed(0)} Kč)
+                </option>
+              ))
+            )}
           </select>
         </label>
-
-        {kind === "service" ? (
-          <label className="block space-y-1 text-sm">
-            <span>Služba</span>
-            <select
-              name="priceItemId"
-              className={fieldClass}
-              value={priceItemId}
-              onChange={(e) => setPriceItemId(e.target.value)}
-              required
-            >
-              {priceItems.length === 0 ? (
-                <option value="">Žádná položka s povoleným poukazem</option>
-              ) : (
-                priceItems.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({(p.priceCents / 100).toFixed(0)} Kč)
-                  </option>
-                ))
-              )}
-            </select>
-            {selected ? (
-              <input
-                type="hidden"
-                name="price"
-                value={(selected.priceCents / 100).toFixed(2).replace(".", ",")}
-              />
-            ) : null}
-          </label>
-        ) : (
-          <label className="block space-y-1 text-sm">
-            <span>Hodnota (Kč)</span>
-            <input
-              name="price"
-              required
-              className={fieldClass}
-              placeholder="1000"
-            />
-          </label>
-        )}
       </Section>
 
       <Section title="Kupující">

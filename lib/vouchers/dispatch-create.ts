@@ -1,9 +1,8 @@
 import { getGiftCustomerForTenant } from "@/lib/gift-customers/repository";
 import { upsertGiftCustomerFromEmail } from "@/lib/gift-customers/upsert-from-email";
-import { parseCzkInput } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { createVoucher } from "@/lib/vouchers/create-voucher";
-import { isVoucherKind } from "@/lib/vouchers/status";
+import type { VoucherKind } from "@/lib/vouchers/status";
 
 export type CreateVoucherResult = {
   error?: string;
@@ -13,6 +12,10 @@ export type CreateVoucherResult = {
 
 function displayName(lastName: string, firstName: string): string {
   return `${lastName} ${firstName}`.trim();
+}
+
+function kindFromCategory(category: string): VoucherKind {
+  return category === "ostatni" ? "value" : "service";
 }
 
 async function resolvePerson(
@@ -56,11 +59,6 @@ export async function dispatchCreateVoucher(
   tenantId: string,
   formData: FormData
 ): Promise<CreateVoucherResult> {
-  const kindRaw = String(formData.get("kind") ?? "");
-  if (!isVoucherKind(kindRaw)) {
-    return { error: "Vyberte druh poukazu." };
-  }
-
   const buyer = await resolvePerson(tenantId, "buyer", formData);
   if ("error" in buyer) return buyer;
   if (!buyer.name) return { error: "Zadejte jméno kupujícího." };
@@ -73,33 +71,26 @@ export async function dispatchCreateVoucher(
   const recipient = await resolvePerson(tenantId, "recipient", formData);
   if ("error" in recipient) return recipient;
 
-  const priceRaw = String(formData.get("price") ?? "");
-  let priceCents = parseCzkInput(priceRaw);
   const priceItemId = String(formData.get("priceItemId") ?? "").trim() || null;
   const note = String(formData.get("note") ?? "").trim();
 
-  if (kindRaw === "service") {
-    if (!priceItemId) return { error: "Vyberte službu z ceníku." };
-    const item = await prisma.priceItem.findFirst({
-      where: {
-        id: priceItemId,
-        tenantId,
-        giftEligible: true,
-        active: true,
-      },
-    });
-    if (!item) return { error: "Služba není dostupná jako dárkový poukaz." };
-    priceCents = item.priceCents;
-  } else if (priceCents === null || priceCents <= 0) {
-    return { error: "Zadejte hodnotu poukazu v Kč." };
-  }
+  if (!priceItemId) return { error: "Vyberte položku z ceníku." };
+  const item = await prisma.priceItem.findFirst({
+    where: {
+      id: priceItemId,
+      tenantId,
+      giftEligible: true,
+      active: true,
+    },
+  });
+  if (!item) return { error: "Položka není dostupná jako dárkový poukaz." };
 
   try {
     const { voucherId } = await createVoucher({
       tenantId,
-      kind: kindRaw,
+      kind: kindFromCategory(item.category),
       priceItemId,
-      priceCents: priceCents!,
+      priceCents: item.priceCents,
       buyerName: buyer.name,
       recipientName: recipient.name,
       buyerEmail: buyer.email,

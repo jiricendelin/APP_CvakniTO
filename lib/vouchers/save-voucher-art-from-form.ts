@@ -39,7 +39,6 @@ export async function saveVoucherArtFromForm(
   );
 
   let voucherBackImage = current.voucherBackImage ?? "";
-  let voucherValueFrontImage = current.voucherValueFrontImage ?? "";
   const fronts = { ...(current.voucherFrontImages ?? {}) };
 
   const backFile = formData.get("backImage");
@@ -52,20 +51,6 @@ export async function saveVoucherArtFromForm(
     voucherBackImage = await saveVoucherArtFile(
       tenantId,
       `back-${Date.now()}.${ext}`,
-      buf
-    );
-  }
-
-  const valueFront = formData.get("valueFrontImage");
-  if (valueFront instanceof File && valueFront.size > 0) {
-    if (valueFront.size > 5 * 1024 * 1024) {
-      return { error: "Přední strana (hodnota) max 5 MB." };
-    }
-    const buf = Buffer.from(await valueFront.arrayBuffer());
-    const ext = extForFile(valueFront, buf);
-    voucherValueFrontImage = await saveVoucherArtFile(
-      tenantId,
-      `value-front-${Date.now()}.${ext}`,
       buf
     );
   }
@@ -88,7 +73,6 @@ export async function saveVoucherArtFromForm(
   await saveTenantSettings(tenantId, {
     ...current,
     voucherBackImage,
-    voucherValueFrontImage,
     voucherFrontImages: fronts,
     voucherNumberX: Number.isFinite(numberX) ? numberX : 50,
     voucherNumberY: Number.isFinite(numberY) ? numberY : 70,

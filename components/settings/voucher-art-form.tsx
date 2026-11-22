@@ -21,6 +21,7 @@ export function VoucherArtForm({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [previewPending, setPreviewPending] = useState(false);
   const [error, setError] = useState<string>();
   const [success, setSuccess] = useState<string>();
 
@@ -51,6 +52,33 @@ export function VoucherArtForm({
     }
   }
 
+  async function onPreview(form: HTMLFormElement) {
+    setPreviewPending(true);
+    setError(undefined);
+    try {
+      const res = await fetch("/api/settings/voucher-art/preview", {
+        method: "POST",
+        body: new FormData(form),
+      });
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!res.ok || !contentType.includes("application/pdf")) {
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        setError(data.error ?? "Náhled se nepodařilo vytvořit.");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setError("Náhled se nepodařilo vytvořit.");
+    } finally {
+      setPreviewPending(false);
+    }
+  }
+
   return (
     <form
       onSubmit={onSubmit}
@@ -59,9 +87,10 @@ export function VoucherArtForm({
     >
       <CsrfField token={csrf} />
       <p className="text-sm text-muted-foreground">
-        Nahrajte přední a zadní stranu ve formátu DL na šířku (210 × 100 mm,
-        ideálně 2480 × 1181 px), JPG nebo PNG. Na zadní straně se dosadí
-        evidenční číslo a platnost podle pozic v % zadní strany.
+        Zadní strana je společná. Přední stranu nahrajte ke každé položce
+        ceníku s poukazem (služba i hodnota, např. Poukaz 1 500). Formát DL na
+        šířku (210 × 100 mm, ideálně 2480 × 1181 px), JPG nebo PNG. Na zadní
+        straně se dosadí evidenční číslo a platnost podle pozic v %.
       </p>
 
       <label className="block space-y-1 text-sm">
@@ -74,27 +103,10 @@ export function VoucherArtForm({
         <input name="backImage" type="file" accept="image/jpeg,image/png" className={fieldClass} />
       </label>
 
-      <label className="block space-y-1 text-sm">
-        <span>
-          Přední strana — hodnota
-          {settings.voucherValueFrontImage
-            ? ` (nahráno: ${settings.voucherValueFrontImage})`
-            : ""}
-        </span>
-        <input
-          name="valueFrontImage"
-          type="file"
-          accept="image/jpeg,image/png"
-          className={fieldClass}
-        />
-      </label>
-
-      <fieldset className="space-y-2 rounded-lg border border-border p-4">
-        <legend className="px-1 text-sm font-medium">
-          Přední strana — služba
-        </legend>
+      <fieldset className="space-y-2 rounded-lg border border-border bg-muted/50 p-4">
+        <legend className="px-1 text-sm font-medium">Přední strana</legend>
         <select name="priceItemId" className={fieldClass} defaultValue="">
-          <option value="">Vyberte položku…</option>
+          <option value="">Vyberte položku ceníku…</option>
           {giftItems.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -110,7 +122,7 @@ export function VoucherArtForm({
         />
       </fieldset>
 
-      <fieldset className="grid grid-cols-2 gap-3 rounded-lg border border-border p-4">
+      <fieldset className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/50 p-4">
         <legend className="px-1 text-sm font-medium">Pozice na zadní straně (%)</legend>
         <label className="text-xs">
           Číslo X
@@ -174,13 +186,26 @@ export function VoucherArtForm({
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {success ? <p className="text-sm text-green-700">{success}</p> : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-      >
-        {pending ? "Ukládám…" : "Uložit grafiku poukazu"}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="submit"
+          disabled={pending || previewPending}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+        >
+          {pending ? "Ukládám…" : "Uložit grafiku poukazu"}
+        </button>
+        <button
+          type="button"
+          disabled={pending || previewPending}
+          onClick={(e) => {
+            const form = e.currentTarget.form;
+            if (form) void onPreview(form);
+          }}
+          className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium disabled:opacity-60"
+        >
+          {previewPending ? "Připravuji náhled…" : "Náhled zadní strany"}
+        </button>
+      </div>
     </form>
   );
 }
