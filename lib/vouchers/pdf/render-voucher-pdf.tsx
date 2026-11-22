@@ -7,6 +7,7 @@ import {
 } from "@/lib/time/prague-parts";
 import { registerInvoicePdfFonts } from "@/lib/invoices/pdf/register-fonts";
 import { resolveVoucherArtFile } from "../art-path";
+import { previewNextVoucherNumber } from "../sequence";
 import { VoucherPdfDocument } from "./voucher-pdf-document";
 
 export type VoucherPdfInput = {
@@ -79,14 +80,18 @@ export type VoucherArtPreviewOverrides = {
   voucherValidY?: number;
   voucherNumberFontSize?: number;
   voucherValidFontSize?: number;
+  priceItemId?: string | null;
+  serviceName?: string;
 };
 
-/** Náhled A4 s výplňkovými údaji — pro ladění pozic na zadní straně. */
+/** Náhled A4 — příští číslo z řady + vybraná přední strana. */
 export async function renderVoucherArtPreviewPdf(
   tenantId: string,
   settings: TenantSettings,
   overrides: VoucherArtPreviewOverrides = {}
 ): Promise<Buffer> {
+  const number = await previewNextVoucherNumber(tenantId);
+
   const merged: TenantSettings = {
     ...settings,
     voucherNumberX: overrides.voucherNumberX ?? settings.voucherNumberX,
@@ -99,14 +104,14 @@ export async function renderVoucherArtPreviewPdf(
       overrides.voucherValidFontSize ?? settings.voucherValidFontSize,
   };
 
-  const frontIds = Object.keys(merged.voucherFrontImages ?? {});
+  const priceItemId = overrides.priceItemId?.trim() || null;
   return renderVoucherPdfBuffer({
     tenantId,
     settings: merged,
-    number: "DP-2026-0001",
+    number,
     validUntil: addMonthsPrague(new Date(), 6),
     kind: "service",
-    priceItemId: frontIds[0] ?? null,
-    serviceName: "Náhled poukazu",
+    priceItemId,
+    serviceName: overrides.serviceName?.trim() || "Náhled poukazu",
   });
 }

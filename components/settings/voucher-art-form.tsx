@@ -203,7 +203,7 @@ export function VoucherArtForm({
           }}
           className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium disabled:opacity-60"
         >
-          {previewPending ? "Připravuji náhled…" : "Náhled zadní strany"}
+          {previewPending ? "Připravuji náhled…" : "Náhled DP"}
         </button>
       </div>
     </form>

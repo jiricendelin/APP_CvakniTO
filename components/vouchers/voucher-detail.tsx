@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  deleteVoucherAction,
   extendVoucherAction,
   updateVoucherFieldsAction,
   updateVoucherStatusAction,
@@ -25,6 +26,7 @@ import {
   isVoucherKind,
   isVoucherStatus,
 } from "@/lib/vouchers/status";
+import { Trash2 } from "lucide-react";
 
 const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
@@ -46,7 +48,10 @@ export type VoucherDetailData = {
     number: string;
     variableSymbol: string;
     paidAt: string | null;
+    eetStatus: string;
+    paymentsCount: number;
   } | null;
+  canDelete: boolean;
 };
 
 export type UnmatchedPaymentOption = {
@@ -214,7 +219,33 @@ export function VoucherDetail({
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-border p-4 space-y-2">
-        <h2 className="text-lg font-semibold">Poukaz {voucher.number}</h2>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h2 className="text-lg font-semibold">Poukaz {voucher.number}</h2>
+          {voucher.canDelete ? (
+            <form
+              action={deleteVoucherAction}
+              onSubmit={(e) => {
+                if (
+                  !window.confirm(
+                    "Opravdu smazat tento poukaz a související účtenku? Tuto akci nelze vrátit."
+                  )
+                ) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              <CsrfField token={csrf} />
+              <input type="hidden" name="id" value={voucher.id} />
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Smazat
+              </button>
+            </form>
+          ) : null}
+        </div>
         <p className="text-sm text-muted-foreground">
           {isVoucherKind(voucher.kind)
             ? VOUCHER_KIND_LABELS[voucher.kind]

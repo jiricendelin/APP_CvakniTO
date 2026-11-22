@@ -1,17 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getTenantId } from "@/lib/auth";
 import { assertCsrf } from "@/lib/auth/csrf";
-import { parseCzkInput } from "@/lib/money";
 import {
   isVoucherStatus,
   VOUCHER_STATUSES,
 } from "@/lib/vouchers/status";
 import { addMonthsPrague } from "@/lib/time/prague-parts";
 import { resolveRecipientName } from "@/lib/vouchers/resolve-recipient";
+import { canDeleteVoucher } from "@/lib/vouchers/can-delete";
 
 export type VoucherActionState = {
   error?: string;
@@ -170,6 +171,63 @@ export async function updateVoucherFieldsAction(
   revalidatePath(`/vouchers/${id}`);
   revalidatePath("/vouchers");
   return { success: "Uloženo." };
+}
+
+export async function deleteVoucherAction(formData: FormData): Promise<void> {
+  try {
+    await assertCsrf(formData);
+  } catch {
+    throw new Error("Neplatný CSRF token. Obnovte stránku.");
+  }
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) throw new Error("Chybí ID poukazu.");
+
+  const tenantId = await getTenantId();
+  const row = await prisma.voucher.findFirst({
+    where: { id, tenantId },
+    select: {
+      id: true,
+      status: true,
+      receiptId: true,
+      receipt: {
+        select: {
+          id: true,
+          paidAt: true,
+          eetStatus: true,
+          _count: { select: { payments: true } },
+        },
+      },
+    },
+  });
+  if (!row) throw new Error("Poukaz nenalezen.");
+
+  const receipt = row.receipt
+    ? {
+        paidAt: row.receipt.paidAt,
+        eetStatus: row.receipt.eetStatus,
+        paymentsCount: row.receipt._count.payments,
+      }
+    : null;
+
+  if (!canDeleteVoucher({ status: row.status, receipt })) {
+    throw new Error(
+      "Poukaz nelze smazat (je zaplacený, vyčerpaný, nebo má platbu / EET)."
+    );
+  }
+
+  const receiptId = row.receipt?.id ?? null;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.voucher.delete({ where: { id: row.id } });
+    if (receiptId) {
+      await tx.receipt.delete({ where: { id: receiptId } });
+    }
+  });
+
+  revalidatePath("/vouchers");
+  revalidatePath("/receipts");
+  redirect("/vouchers");
 }
 
 export { VOUCHER_STATUSES };

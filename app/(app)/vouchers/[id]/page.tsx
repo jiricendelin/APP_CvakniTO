@@ -6,6 +6,7 @@ import { listUnmatchedPaymentsForTenant } from "@/lib/payments/repository";
 import { listGiftCustomersForTenant } from "@/lib/gift-customers/repository";
 import { VoucherDetail } from "@/components/vouchers/voucher-detail";
 import { PageHeader } from "@/components/ui/page-header";
+import { canDeleteVoucher } from "@/lib/vouchers/can-delete";
 
 export const dynamic = "force-dynamic";
 
@@ -66,8 +67,20 @@ export default async function VoucherDetailPage({
                 number: voucher.receipt.number,
                 variableSymbol: voucher.receipt.variableSymbol,
                 paidAt: voucher.receipt.paidAt?.toISOString() ?? null,
+                eetStatus: voucher.receipt.eetStatus,
+                paymentsCount: voucher.receipt.payments.length,
               }
             : null,
+          canDelete: canDeleteVoucher({
+            status: voucher.status,
+            receipt: voucher.receipt
+              ? {
+                  paidAt: voucher.receipt.paidAt,
+                  eetStatus: voucher.receipt.eetStatus,
+                  paymentsCount: voucher.receipt.payments.length,
+                }
+              : null,
+          }),
         }}
       />
     </div>
