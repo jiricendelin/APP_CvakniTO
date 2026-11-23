@@ -140,6 +140,13 @@ export function EmailTemplatesForm({
           htmlName="mailReceiptReminderHtml"
           settings={settings}
         />
+        <TemplateBlock
+          title="Storno poplatek"
+          subjectName="mailStornoSubject"
+          textName="mailStornoText"
+          htmlName="mailStornoHtml"
+          settings={settings}
+        />
         {state.error && (
           <p className="text-sm text-red-700" role="alert">
             {state.error}

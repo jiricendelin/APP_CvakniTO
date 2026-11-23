@@ -14,6 +14,8 @@ import {
   DEFAULT_MAIL_RECEIPT_TEXT,
   DEFAULT_MAIL_RECEIPT_REMINDER_SUBJECT,
   DEFAULT_MAIL_RECEIPT_REMINDER_TEXT,
+  DEFAULT_MAIL_STORNO_SUBJECT,
+  DEFAULT_MAIL_STORNO_TEXT,
 } from "./template-defaults";
 
 export const mailTemplatesSchema = z.object({
@@ -54,6 +56,9 @@ export const mailTemplatesSchema = z.object({
     .optional()
     .default(DEFAULT_MAIL_RECEIPT_REMINDER_TEXT),
   mailReceiptReminderHtml: z.string().max(50_000).optional().default(""),
+  mailStornoSubject: z.string().max(500).optional().default(DEFAULT_MAIL_STORNO_SUBJECT),
+  mailStornoText: z.string().max(20_000).optional().default(DEFAULT_MAIL_STORNO_TEXT),
+  mailStornoHtml: z.string().max(50_000).optional().default(""),
 });
 
 export const mailTemplatesFormSchema = z.object({
@@ -78,4 +83,7 @@ export const mailTemplatesFormSchema = z.object({
   mailReceiptReminderSubject: z.string().max(500),
   mailReceiptReminderText: z.string().max(20_000),
   mailReceiptReminderHtml: z.string().max(50_000),
+  mailStornoSubject: z.string().max(500),
+  mailStornoText: z.string().max(20_000),
+  mailStornoHtml: z.string().max(50_000),
 });

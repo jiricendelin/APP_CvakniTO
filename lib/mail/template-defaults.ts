@@ -83,3 +83,17 @@ Variabilní symbol: {{variableSymbol}}
 Prosíme o úhradu.
 
 {{companyName}}`;
+
+export const DEFAULT_MAIL_STORNO_SUBJECT =
+  "Storno poplatek {{totalCzk}} — {{companyName}}";
+
+export const DEFAULT_MAIL_STORNO_TEXT = `Dobrý den,
+
+zasíláme Vám výzvu k úhradě storno poplatku ve výši {{totalCzk}} (neomluvené / nevyužité termíny).
+
+Číslo účtenky: {{receiptNumber}}
+Variabilní symbol: {{variableSymbol}}
+
+Prosíme o úhradu převodem. Platební údaje a QR kód jsou v příloze (PDF účtenky).
+
+{{companyName}}`;

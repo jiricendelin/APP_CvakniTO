@@ -48,6 +48,9 @@ export async function updateEmailTemplatesAction(
       formData.get("mailReceiptReminderSubject") ?? "",
     mailReceiptReminderText: formData.get("mailReceiptReminderText") ?? "",
     mailReceiptReminderHtml: formData.get("mailReceiptReminderHtml") ?? "",
+    mailStornoSubject: formData.get("mailStornoSubject") ?? "",
+    mailStornoText: formData.get("mailStornoText") ?? "",
+    mailStornoHtml: formData.get("mailStornoHtml") ?? "",
   });
 
   if (!parsed.success) {

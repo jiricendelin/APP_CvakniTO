@@ -9,6 +9,8 @@ import {
   DEFAULT_MAIL_RECEIPT_TEXT,
   DEFAULT_MAIL_RECEIPT_REMINDER_SUBJECT,
   DEFAULT_MAIL_RECEIPT_REMINDER_TEXT,
+  DEFAULT_MAIL_STORNO_SUBJECT,
+  DEFAULT_MAIL_STORNO_TEXT,
 } from "@/lib/mail/template-defaults";
 import { prisma } from "@/lib/prisma";
 
@@ -48,15 +50,31 @@ export async function sendReceiptMail(input: {
     input.customerName?.trim() || ""
   );
 
-  const subjectTpl = input.reminder
-    ? settings.mailReceiptReminderSubject || DEFAULT_MAIL_RECEIPT_REMINDER_SUBJECT
-    : settings.mailReceiptSubject || DEFAULT_MAIL_RECEIPT_SUBJECT;
-  const textTpl = input.reminder
-    ? settings.mailReceiptReminderText || DEFAULT_MAIL_RECEIPT_REMINDER_TEXT
-    : settings.mailReceiptText || DEFAULT_MAIL_RECEIPT_TEXT;
-  const htmlTpl = input.reminder
-    ? settings.mailReceiptReminderHtml?.trim() || ""
-    : settings.mailReceiptHtml?.trim() || "";
+  const isStorno = receipt.kind === "storno" && !input.reminder;
+
+  let subjectTpl: string;
+  let textTpl: string;
+  let htmlTpl: string;
+  let mailKind: string;
+
+  if (input.reminder) {
+    subjectTpl =
+      settings.mailReceiptReminderSubject || DEFAULT_MAIL_RECEIPT_REMINDER_SUBJECT;
+    textTpl =
+      settings.mailReceiptReminderText || DEFAULT_MAIL_RECEIPT_REMINDER_TEXT;
+    htmlTpl = settings.mailReceiptReminderHtml?.trim() || "";
+    mailKind = "receipt_reminder";
+  } else if (isStorno) {
+    subjectTpl = settings.mailStornoSubject || DEFAULT_MAIL_STORNO_SUBJECT;
+    textTpl = settings.mailStornoText || DEFAULT_MAIL_STORNO_TEXT;
+    htmlTpl = settings.mailStornoHtml?.trim() || "";
+    mailKind = "receipt_storno";
+  } else {
+    subjectTpl = settings.mailReceiptSubject || DEFAULT_MAIL_RECEIPT_SUBJECT;
+    textTpl = settings.mailReceiptText || DEFAULT_MAIL_RECEIPT_TEXT;
+    htmlTpl = settings.mailReceiptHtml?.trim() || "";
+    mailKind = "receipt";
+  }
 
   const subject = renderMailTemplate(subjectTpl, ctx);
   const text = renderMailTemplate(textTpl, ctx);
@@ -71,7 +89,7 @@ export async function sendReceiptMail(input: {
     subject,
     text,
     html,
-    kind: input.reminder ? "receipt_reminder" : "receipt",
+    kind: mailKind,
     meta: { receiptId: receipt.id },
     attachments: [
       {
