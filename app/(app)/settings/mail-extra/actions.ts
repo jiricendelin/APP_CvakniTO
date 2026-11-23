@@ -36,7 +36,7 @@ export async function updateMailSignatureAndImapAction(
     imapHost: String(formData.get("imapHost") ?? "").trim(),
     imapPort: Number.isFinite(imapPort) ? imapPort : 993,
     imapSecure: formData.get("imapSecure") !== "false",
-    imapSentFolder: String(formData.get("imapSentFolder") ?? "Sent").trim() || "Sent",
+    imapSentFolder: String(formData.get("imapSentFolder") ?? "sent").trim() || "sent",
   });
 
   revalidatePath("/settings");

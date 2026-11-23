@@ -118,9 +118,9 @@ export function MailSignatureImapForm({
           <span>Složka Odeslané</span>
           <input
             name="imapSentFolder"
-            defaultValue={settings.imapSentFolder || "Sent"}
+            defaultValue={settings.imapSentFolder || "sent"}
             className={fieldClass}
-            placeholder="Sent / Odeslaná pošta"
+            placeholder="sent"
           />
         </label>
         <p className="text-xs text-muted-foreground">

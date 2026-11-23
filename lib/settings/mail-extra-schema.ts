@@ -7,7 +7,7 @@ export const mailExtraSettingsSchema = z.object({
   imapHost: z.string().max(200).optional().default(""),
   imapPort: z.number().int().min(1).max(65535).optional().default(993),
   imapSecure: z.boolean().optional().default(true),
-  imapSentFolder: z.string().max(200).optional().default("Sent"),
+  imapSentFolder: z.string().max(200).optional().default("sent"),
   imapEnabled: z.boolean().optional().default(false),
   /** Relativní cesty k souborům v data/vouchers/{tenantId}/ */
   voucherBackImage: z.string().max(500).optional().default(""),

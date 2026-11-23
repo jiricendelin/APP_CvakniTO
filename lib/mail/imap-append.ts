@@ -73,7 +73,7 @@ export async function appendToSentFolder(
       IMAP_CONNECT_TIMEOUT_MS,
       "IMAP připojení vypršelo."
     );
-    const folder = settings.imapSentFolder.trim() || "Sent";
+    const folder = settings.imapSentFolder.trim() || "sent";
     await withTimeout(
       client.append(folder, rawMessage, ["\\Seen"]),
       IMAP_APPEND_TIMEOUT_MS,
