@@ -15,7 +15,6 @@ import {
 import { maybeAutoEetAfterReceiptChange } from "@/lib/receipts/maybe-auto-eet";
 import {
   isPaymentType,
-  PAYMENT_TYPES,
   type PaymentType,
 } from "@/lib/receipts/payment-type";
 
@@ -288,5 +287,3 @@ export async function markReceiptPaidAction(
   revalidatePath(`/receipts/${receiptId}`);
   return { success: true };
 }
-
-export { PAYMENT_TYPES };

@@ -6,10 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getTenantId } from "@/lib/auth";
 import { assertCsrf } from "@/lib/auth/csrf";
-import {
-  isVoucherStatus,
-  VOUCHER_STATUSES,
-} from "@/lib/vouchers/status";
+import { isVoucherStatus } from "@/lib/vouchers/status";
 import { addMonthsPrague } from "@/lib/time/prague-parts";
 import { resolveRecipientName } from "@/lib/vouchers/resolve-recipient";
 import { canDeleteVoucher } from "@/lib/vouchers/can-delete";
@@ -229,5 +226,3 @@ export async function deleteVoucherAction(formData: FormData): Promise<void> {
   revalidatePath("/receipts");
   redirect("/vouchers");
 }
-
-export { VOUCHER_STATUSES };
