@@ -81,6 +81,22 @@ export function PaymentSettingsForm({
             Záloha, když číslo účtu chybí. Pro QR musí být český (CZ…).
           </p>
         </div>
+        <div className="space-y-2">
+          <label htmlFor="swift" className="text-sm font-medium">
+            SWIFT / BIC
+          </label>
+          <input
+            id="swift"
+            name="swift"
+            className={fieldClass}
+            placeholder="FIOBCZPPXXX"
+            defaultValue={settings.swift}
+            autoCapitalize="characters"
+          />
+          <p className="text-xs text-muted-foreground">
+            Zobrazí se v platebním bloku na PDF faktuře.
+          </p>
+        </div>
       </section>
 
       {state.error && (

@@ -100,6 +100,50 @@ export function CompanySettingsForm({
             defaultValue={settings.companyAddress}
           />
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <label htmlFor="companyEmail" className="text-sm font-medium">
+              E-mail (faktura)
+            </label>
+            <input
+              id="companyEmail"
+              name="companyEmail"
+              type="email"
+              className={fieldClass}
+              defaultValue={settings.companyEmail}
+              autoComplete="email"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="companyPhone" className="text-sm font-medium">
+              Telefon
+            </label>
+            <input
+              id="companyPhone"
+              name="companyPhone"
+              type="tel"
+              className={fieldClass}
+              defaultValue={settings.companyPhone}
+              autoComplete="tel"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="companySignature" className="text-sm font-medium">
+            Informace o úřadu
+          </label>
+          <textarea
+            id="companySignature"
+            name="companySignature"
+            rows={2}
+            className={fieldClass}
+            placeholder="Živnostenský úřad: …"
+            defaultValue={settings.companySignature}
+          />
+          <p className="text-xs text-muted-foreground">
+            Malý text pod IČO na PDF faktuře (živnostenský úřad apod.).
+          </p>
+        </div>
       </section>
 
       <section className="space-y-4">

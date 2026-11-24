@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+import path from "node:path";
 import { renderToBuffer } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import { buildSpaydForReceipt } from "@/lib/spayd";
@@ -9,6 +11,19 @@ import { registerInvoicePdfFonts } from "./register-fonts";
 type InvoiceWithRelations = NonNullable<
   Awaited<ReturnType<typeof getInvoiceForTenant>>
 >;
+
+async function loadLogoDataUrl(): Promise<string | null> {
+  const logoPath = path.join(
+    process.cwd(),
+    "lib/invoices/assets/Timmy_logo_RGB.png"
+  );
+  try {
+    const logoBuffer = await fs.readFile(logoPath);
+    return `data:image/png;base64,${logoBuffer.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
 
 export async function renderInvoicePdfBuffer(
   invoice: InvoiceWithRelations,
@@ -32,6 +47,8 @@ export async function renderInvoicePdfBuffer(
     });
   }
 
+  const logoSrc = await loadLogoDataUrl();
+
   const data: InvoicePdfData = {
     number: invoice.number,
     variableSymbol: invoice.variableSymbol,
@@ -41,13 +58,27 @@ export async function renderInvoicePdfBuffer(
     items: invoice.items.map((item) => ({
       name: item.name,
       quantity: item.quantity,
-      priceCents: item.priceCents,
       lineTotalCents: item.lineTotalCents,
-      category: item.category,
     })),
-    customer: invoice.customer,
-    settings,
+    customer: {
+      name: invoice.customer.name,
+      ico: invoice.customer.ico,
+      dic: invoice.customer.dic,
+      address: invoice.customer.address,
+    },
+    settings: {
+      companyName: settings.companyName,
+      companyIco: settings.companyIco,
+      companyAddress: settings.companyAddress,
+      companyEmail: settings.companyEmail,
+      companyPhone: settings.companyPhone,
+      companySignature: settings.companySignature,
+      bankAccount: settings.bankAccount,
+      iban: settings.iban,
+      swift: settings.swift,
+    },
     qrDataUrl,
+    logoSrc,
   };
 
   const buffer = await renderToBuffer(<InvoicePdfDocument data={data} />);

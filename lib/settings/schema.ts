@@ -16,8 +16,12 @@ export const tenantSettingsSchema = z.object({
   companyIco: z.string().max(20).optional().default(""),
   companyDic: z.string().max(20).optional().default(""),
   companyAddress: z.string().max(500).optional().default(""),
+  companyEmail: z.string().max(200).optional().default(""),
+  companyPhone: z.string().max(40).optional().default(""),
+  companySignature: z.string().max(1000).optional().default(""),
   bankAccount: z.string().max(40).optional().default(""),
   iban: z.string().max(40).optional().default(""),
+  swift: z.string().max(20).optional().default(""),
   primaryColor: hexColor.optional().default(DEFAULT_PRIMARY_COLOR),
   receiptTemplate: z
     .string()
@@ -44,6 +48,9 @@ export const companySettingsFormSchema = z.object({
   companyIco: z.string().max(20),
   companyDic: z.string().max(20),
   companyAddress: z.string().max(500),
+  companyEmail: z.string().max(200),
+  companyPhone: z.string().max(40),
+  companySignature: z.string().max(1000),
   primaryColor: hexColor,
 });
 
@@ -51,13 +58,23 @@ export function formToCompanySettings(
   data: z.infer<typeof companySettingsFormSchema>
 ): Pick<
   TenantSettings,
-  "companyName" | "companyIco" | "companyDic" | "companyAddress" | "primaryColor"
+  | "companyName"
+  | "companyIco"
+  | "companyDic"
+  | "companyAddress"
+  | "companyEmail"
+  | "companyPhone"
+  | "companySignature"
+  | "primaryColor"
 > {
   return {
     companyName: data.companyName.trim(),
     companyIco: data.companyIco.trim(),
     companyDic: data.companyDic.trim(),
     companyAddress: data.companyAddress.trim(),
+    companyEmail: data.companyEmail.trim(),
+    companyPhone: data.companyPhone.trim(),
+    companySignature: data.companySignature.trim(),
     primaryColor: data.primaryColor.toLowerCase(),
   };
 }
@@ -66,6 +83,7 @@ export const paymentSettingsFormSchema = z
   .object({
     bankAccount: z.string().max(40),
     iban: z.string().max(40),
+    swift: z.string().max(20),
   })
   .superRefine((data, ctx) => {
     const iban = normalizeIban(data.iban);
@@ -80,10 +98,11 @@ export const paymentSettingsFormSchema = z
 
 export function formToPaymentSettings(
   data: z.infer<typeof paymentSettingsFormSchema>
-): Pick<TenantSettings, "bankAccount" | "iban"> {
+): Pick<TenantSettings, "bankAccount" | "iban" | "swift"> {
   return {
     bankAccount: data.bankAccount.trim(),
     iban: normalizeIban(data.iban),
+    swift: data.swift.trim().toUpperCase(),
   };
 }
 

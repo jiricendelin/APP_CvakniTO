@@ -37,6 +37,9 @@ export async function updateCompanySettingsAction(
     companyIco: formData.get("companyIco") ?? "",
     companyDic: formData.get("companyDic") ?? "",
     companyAddress: formData.get("companyAddress") ?? "",
+    companyEmail: formData.get("companyEmail") ?? "",
+    companyPhone: formData.get("companyPhone") ?? "",
+    companySignature: formData.get("companySignature") ?? "",
     primaryColor: formData.get("primaryColor") ?? "",
   });
 
@@ -68,6 +71,7 @@ export async function updatePaymentSettingsAction(
   const parsed = paymentSettingsFormSchema.safeParse({
     bankAccount: formData.get("bankAccount") ?? "",
     iban: formData.get("iban") ?? "",
+    swift: formData.get("swift") ?? "",
   });
 
   if (!parsed.success) {
