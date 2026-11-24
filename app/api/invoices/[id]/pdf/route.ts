@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getTenantId } from "@/lib/auth";
 import { getInvoiceForTenant } from "@/lib/invoices/repository";
+import { invoicePdfFilename } from "@/lib/invoices/pdf/filename";
 import { renderInvoicePdfBuffer } from "@/lib/invoices/pdf/render-invoice-pdf";
 import { getTenantSettings } from "@/lib/settings/repository";
 
@@ -28,12 +29,12 @@ export async function GET(
     }
 
     const pdf = await renderInvoicePdfBuffer(invoice, settings);
-    const safeName = invoice.number.replace(/[^\w.-]+/g, "_");
+    const filename = invoicePdfFilename(invoice.number, invoice.customer.name);
 
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="faktura-${safeName}.pdf"`,
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
         "Cache-Control": "private, no-store",
       },
     });

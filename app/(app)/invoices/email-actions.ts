@@ -15,6 +15,7 @@ import {
   DEFAULT_MAIL_THANKS_SUBJECT,
   DEFAULT_MAIL_THANKS_TEXT,
 } from "@/lib/mail/template-defaults";
+import { invoicePdfFilename } from "@/lib/invoices/pdf/filename";
 import { renderInvoicePdfBuffer } from "@/lib/invoices/pdf/render-invoice-pdf";
 import { getInvoiceForTenant } from "@/lib/invoices/repository";
 import { getTenantSettings } from "@/lib/settings/repository";
@@ -96,7 +97,7 @@ async function sendInvoiceMail(
   if (attachPdf) {
     const pdf = await renderInvoicePdfBuffer(invoice, settings);
     attachments.push({
-      filename: `faktura-${invoice.number.replace(/[^\w.-]+/g, "_")}.pdf`,
+      filename: invoicePdfFilename(invoice.number, invoice.customer.name),
       content: pdf,
       contentType: "application/pdf",
     });

@@ -46,7 +46,14 @@ export function InvoiceActions({
   sendSlot,
 }: {
   csrf: string;
-  invoice: { id: string; number: string; status: string; sentAt: Date | null; paidAt: Date | null };
+  invoice: {
+    id: string;
+    number: string;
+    status: string;
+    sentAt: Date | null;
+    paidAt: Date | null;
+    customer: { name: string };
+  };
   canDelete: boolean;
   sendSlot?: React.ReactNode;
 }) {
@@ -91,7 +98,10 @@ export function InvoiceActions({
       )}
 
       {!isDraft && !isCancelled && (
-        <a href={`/api/invoices/${invoice.id}/pdf`}>
+        <a
+          href={`/api/invoices/${invoice.id}/pdf`}
+          download={`Faktura ${invoice.number} - ${invoice.customer.name}.pdf`}
+        >
           <Button variant="outline">
             <FileDown className="h-4 w-4" />
             PDF

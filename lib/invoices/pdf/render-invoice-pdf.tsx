@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { renderToBuffer } from "@react-pdf/renderer";
 import QRCode from "qrcode";
-import { buildSpaydForReceipt } from "@/lib/spayd";
+import { buildSpaydPayment } from "@/lib/spayd";
 import type { TenantSettings } from "@/lib/settings/schema";
 import type { getInvoiceForTenant } from "@/lib/invoices/repository";
 import { InvoicePdfDocument, type InvoicePdfData } from "./invoice-pdf-document";
@@ -31,12 +31,12 @@ export async function renderInvoicePdfBuffer(
 ): Promise<Buffer> {
   registerInvoicePdfFonts();
 
-  const spayd = buildSpaydForReceipt({
+  const spayd = buildSpaydPayment({
     bankAccount: settings.bankAccount,
     iban: settings.iban,
-    totalCents: invoice.totalCents,
+    amountCents: invoice.totalCents,
     variableSymbol: invoice.variableSymbol,
-    receiptNumber: invoice.number,
+    message: `Faktura ${invoice.number}`,
   });
 
   let qrDataUrl: string | null = null;
